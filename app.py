@@ -133,14 +133,18 @@ _SIDEBAR_CSS = """
     /* === ボタン共通：ピル型 + Dela Gothic One === */
     div[data-testid="stButton"] button {
         border-radius: 999px !important;
-        padding: 14px 28px !important;
+        padding: 14px 20px !important;
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 16px !important;
+        font-size: 18px !important;
         font-weight: 400 !important;
-        letter-spacing: 0.02em !important;
+        letter-spacing: 0.01em !important;
+        white-space: nowrap !important;
+        line-height: 1.1 !important;
+        min-height: 56px !important;
     }
     div[data-testid="stButton"] button p {
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
+        white-space: nowrap !important;
     }
 
     /* プライマリボタン：マゼンタ→ミントの派手グラデ */
@@ -222,16 +226,19 @@ _SIDEBAR_CSS = """
         text-shadow:
             0 0 12px rgba(207, 34, 255, 0.5),
             0 0 24px rgba(207, 34, 255, 0.25);
+        white-space: nowrap;
+        overflow-x: visible;
     }
-    .ai-giron-decohead .big { font-size: 56px; }
-    .ai-giron-decohead .small { font-size: 32px; }
+    .ai-giron-decohead .big { font-size: 64px; }
+    .ai-giron-decohead .small { font-size: 36px; }
     .ai-giron-decohead .slash {
         color: transparent;
         -webkit-text-stroke: 2px #0effb3;
         text-shadow: 0 0 10px rgba(14, 255, 179, 0.5);
-        font-size: 48px;
+        font-size: 56px;
         display: inline-block;
         margin: 0 18px;
+        transform: translateY(4px);
     }
     .ai-giron-title-main {
         font-family: 'Dela Gothic One', sans-serif !important;
@@ -507,8 +514,8 @@ def _main_form() -> dict:
     )
     topic = topic_input.strip() or DEFAULT_TOPIC
 
-    # === キャラA / VS / キャラB（3カラム） ===
-    col_a, col_vs, col_b = st.columns([10, 1, 10])
+    # === キャラA / VS / キャラB（Figma準拠: 298 / 44 / 298） ===
+    col_a, col_vs, col_b = st.columns([298, 80, 298])
     with col_a:
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
     with col_vs:
@@ -516,8 +523,8 @@ def _main_form() -> dict:
     with col_b:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
-    # === ボタン群（大きいスタート + サブのランダム） ===
-    btn_col_main, btn_col_sub = st.columns([2, 1])
+    # === ボタン群（Figma準拠: 中央寄せ 285+285、左右マージン69） ===
+    sp1, btn_col_main, btn_col_sub, sp2 = st.columns([69, 285, 285, 69])
     with btn_col_main:
         start = st.button(
             "▶️ 議論スタート！",
