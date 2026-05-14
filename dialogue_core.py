@@ -8,6 +8,8 @@ yield する各イベントはdict形式で、'type'フィールドで種別を�
 - {"type": "turn", "round": int, "persona": "A"|"B",
    "name": str, "emoji": str, "text": str}       : 発言
 - {"type": "facilitator", "round": int, "text": str}: 介入
+- {"type": "retry", "role": str, "wait_sec": float,
+   "attempt": int}                               : レート制限自動リトライ
 - {"type": "agreement", "round": int}            : 合意成立
 - {"type": "end", "reason": str, "round": int}   : 上限到達など
 - {"type": "summary", "text": str}               : 結論・アドバイス（Markdown）
@@ -16,14 +18,60 @@ yield する各イベントはdict形式で、'type'フィールドで種別を�
 from __future__ import annotations
 
 import os
+import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator, TypeVar
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+T = TypeVar("T")
+MAX_RETRY_WAIT_SEC = 60.0  # 1回の待機の上限
+MAX_RETRY_ATTEMPTS = 2  # 上限を超えたらエラーをそのまま返す
+
+
+def _parse_retry_delay(error_msg: str) -> float:
+    """429エラーメッセージから推奨待機秒数を抽出。"""
+    # "Please retry in 20.007059734s." 形式
+    m = re.search(r"retry in ([\d.]+)s", error_msg)
+    if m:
+        return float(m.group(1))
+    # "'retryDelay': '20s'" 形式
+    m = re.search(r"'retryDelay':\s*'(\d+)s'", error_msg)
+    if m:
+        return float(m.group(1))
+    return 30.0  # フォールバック
+
+
+def _is_rate_limit_error(error_msg: str) -> bool:
+    return "RESOURCE_EXHAUSTED" in error_msg or "429" in error_msg
+
+
+def _safe_call_with_retry(
+    fn: Callable[[], T],
+    *,
+    on_retry: Callable[[float, int], None] | None = None,
+) -> T:
+    """関数呼び出しを 429 自動リトライ付きで実行する。
+
+    最大 MAX_RETRY_ATTEMPTS 回まで再試行。リトライ時は on_retry コールバックで通知。
+    リトライ上限を超えたら最後の例外をそのまま re-raise。
+    """
+    for attempt in range(MAX_RETRY_ATTEMPTS + 1):
+        try:
+            return fn()
+        except Exception as e:
+            msg = str(e)
+            if _is_rate_limit_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
+                delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
+                if on_retry:
+                    on_retry(delay, attempt + 1)
+                time.sleep(delay)
+                continue
+            raise
 
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
@@ -67,10 +115,12 @@ def check_api_availability() -> tuple[bool, str, str]:
         )
     try:
         client = genai.Client(api_key=api_key)
-        client.models.generate_content(
-            model=MODEL,
-            contents="ping",
-            config=types.GenerateContentConfig(max_output_tokens=1),
+        _safe_call_with_retry(
+            lambda: client.models.generate_content(
+                model=MODEL,
+                contents="ping",
+                config=types.GenerateContentConfig(max_output_tokens=1),
+            )
         )
         return True, "API利用可能", "ok"
     except Exception as e:
@@ -126,7 +176,9 @@ def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
 
 YES または NO のみで答えてください。"""
     try:
-        resp = client.models.generate_content(model=MODEL, contents=prompt)
+        resp = _safe_call_with_retry(
+            lambda: client.models.generate_content(model=MODEL, contents=prompt)
+        )
         return (resp.text or "").strip().upper().startswith("YES")
     except Exception:
         return False
@@ -144,7 +196,9 @@ def _call_facilitator(client: genai.Client, transcript: list[str]) -> str:
 - 次に詰めるべきポイントを1つ示す（合意に向けて）
 - 全体150字以内、優しい口調で"""
     try:
-        resp = client.models.generate_content(model=MODEL, contents=prompt)
+        resp = _safe_call_with_retry(
+            lambda: client.models.generate_content(model=MODEL, contents=prompt)
+        )
         return (resp.text or "").strip()
     except Exception as e:
         return f"（介入失敗: {e}）"
@@ -198,15 +252,36 @@ def _call_summarizer(
 （議論で軽視された懸念や、依頼者が見落としそうなポイント。なければ「特になし」）
 """
     try:
-        resp = client.models.generate_content(model=MODEL, contents=prompt)
+        resp = _safe_call_with_retry(
+            lambda: client.models.generate_content(model=MODEL, contents=prompt)
+        )
         return (resp.text or "").strip()
     except Exception as e:
         return f"（要約失敗: {e}）"
 
 
-def _send(chat, message: str) -> str:
-    resp = chat.send_message(message)
-    return (resp.text or "").strip()
+def _send_with_retry_events(chat, message: str) -> Iterator[tuple[str, object]]:
+    """`chat.send_message` を 429 自動リトライ付きで実行するジェネレータ。
+
+    yields:
+        ("retry", {"wait_sec": float, "attempt": int}) - リトライ前
+        ("result", str)                                 - 成功時のテキスト
+        ("error", Exception)                            - 最終失敗時
+    """
+    for attempt in range(MAX_RETRY_ATTEMPTS + 1):
+        try:
+            resp = chat.send_message(message)
+            yield ("result", (resp.text or "").strip())
+            return
+        except Exception as e:
+            msg = str(e)
+            if _is_rate_limit_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
+                delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
+                yield ("retry", {"wait_sec": delay, "attempt": attempt + 1})
+                time.sleep(delay)
+                continue
+            yield ("error", e)
+            return
 
 
 def dialogue_events(
@@ -248,10 +323,22 @@ def dialogue_events(
     transcript: list[str] = []
 
     for round_num in range(1, max_rounds + 1):
-        try:
-            last_a = _send(chat_a, next_input)
-        except Exception as e:
-            yield {"type": "error", "text": f"{persona_a['name']}: {e}"}
+        # --- A の発言（リトライ対応） ---
+        last_a = None
+        for item_type, payload in _send_with_retry_events(chat_a, next_input):
+            if item_type == "retry":
+                yield {
+                    "type": "retry",
+                    "role": persona_a["name"],
+                    "wait_sec": payload["wait_sec"],
+                    "attempt": payload["attempt"],
+                }
+            elif item_type == "result":
+                last_a = payload
+            elif item_type == "error":
+                yield {"type": "error", "text": f"{persona_a['name']}: {payload}"}
+                return
+        if last_a is None:
             return
         yield {
             "type": "turn",
@@ -264,10 +351,22 @@ def dialogue_events(
         transcript.append(f"{persona_a['name']}: {last_a}")
         time.sleep(delay_sec)
 
-        try:
-            last_b = _send(chat_b, last_a)
-        except Exception as e:
-            yield {"type": "error", "text": f"{persona_b['name']}: {e}"}
+        # --- B の発言（リトライ対応） ---
+        last_b = None
+        for item_type, payload in _send_with_retry_events(chat_b, last_a):
+            if item_type == "retry":
+                yield {
+                    "type": "retry",
+                    "role": persona_b["name"],
+                    "wait_sec": payload["wait_sec"],
+                    "attempt": payload["attempt"],
+                }
+            elif item_type == "result":
+                last_b = payload
+            elif item_type == "error":
+                yield {"type": "error", "text": f"{persona_b['name']}: {payload}"}
+                return
+        if last_b is None:
             return
         yield {
             "type": "turn",
@@ -346,6 +445,12 @@ def build_log_markdown(
             lines.append("# 📋 結論ブリーフィング")
             lines.append("")
             lines.append(ev["text"])
+            lines.append("")
+        elif t == "retry":
+            lines.append(
+                f"> ⏳ レート制限により {ev.get('wait_sec', 0):.0f} 秒待機・自動リトライ"
+                f"（{ev.get('role', '')}）"
+            )
             lines.append("")
         elif t == "error":
             lines.append("## ❌ エラー")

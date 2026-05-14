@@ -30,6 +30,15 @@ def _print_event(ev: dict) -> None:
     elif t == "facilitator":
         print(f"\n## 🎤 ファシリテーター介入（{ev['round']}往復経過）\n")
         print(ev["text"])
+    elif t == "retry":
+        wait_sec = ev.get("wait_sec", 0)
+        attempt = ev.get("attempt", 1)
+        role = ev.get("role", "")
+        print(
+            f"\n⏳ レート制限検出（{role}）。{wait_sec:.0f}秒待機してリトライ "
+            f"（{attempt}回目）...\n",
+            file=sys.stderr,
+        )
     elif t == "agreement":
         print(f"\n## ✅ 合意成立（{ev['round']}往復）\n")
     elif t == "end":

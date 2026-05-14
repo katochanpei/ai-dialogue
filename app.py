@@ -92,18 +92,19 @@ st.markdown(
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
-    /* ネオングリーンの「ランダム議論」ボタン（サイドバー内のsecondaryボタン全般を対象） */
+    /* 「ランダム議論」ボタン（サイドバー内のsecondaryボタン全般を対象） */
+    /* 主張は控えめだが、押せば始まるとわかる程度の存在感 */
     section[data-testid="stSidebar"] button[kind="secondary"] {
-        background: linear-gradient(135deg, #39ff14, #00e676) !important;
-        color: #000 !important;
-        border: 2px solid #00c853 !important;
-        font-weight: 700 !important;
-        box-shadow: 0 0 10px rgba(57, 255, 20, 0.6) !important;
+        background: linear-gradient(135deg, #4ade80, #22c55e) !important;
+        color: #052e16 !important;
+        border: 1px solid #16a34a !important;
+        font-weight: 600 !important;
+        box-shadow: 0 0 4px rgba(34, 197, 94, 0.25) !important;
         transition: all 0.2s ease !important;
     }
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
-        background: linear-gradient(135deg, #00e676, #39ff14) !important;
-        box-shadow: 0 0 16px rgba(57, 255, 20, 0.9) !important;
+        background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.45) !important;
         transform: translateY(-1px) !important;
     }
 </style>
@@ -267,6 +268,14 @@ def _render_event(ev: dict, container) -> None:
         with container.chat_message("ai", avatar="🎤"):
             st.caption(f"ファシリテーター介入（{ev['round']}往復経過）")
             st.info(ev["text"])
+    elif t == "retry":
+        wait_sec = ev.get("wait_sec", 0)
+        attempt = ev.get("attempt", 1)
+        role = ev.get("role", "")
+        container.warning(
+            f"⏳ APIレート制限を検出（{role}）。"
+            f"{wait_sec:.0f} 秒待機してから自動リトライします（{attempt}回目）..."
+        )
     elif t == "agreement":
         container.success(f"✅ 合意成立！（{ev['round']}往復）")
     elif t == "end":
@@ -373,24 +382,35 @@ def _render_past_log(log_path: Path) -> None:
 
 def _render_intro() -> None:
     st.title("🎙 AI議論")
+    st.caption("Gemini同士が自律的に議論して結論を出すツール")
+
     st.markdown(
         """
-左のサイドバーでお題とキャラA/Bを選んで、**▶️ 議論スタート** を押してください。
-
-- Gemini同士が自律的に議論して、合意するまで進む
-- 3往復ごとにファシリテーターが論点を整理
-- ターミナルではなく、ここで観戦できる
-- 終了後はログが `logs/` に保存される
-        """
+<div style="padding: 22px 26px; margin: 18px 0; border-radius: 12px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-left: 6px solid #2563eb;">
+  <div style="font-weight: 700; font-size: 1.05rem; color: #1e3a8a; margin-bottom: 12px;">
+    👇 使い方（3ステップ）
+  </div>
+  <ol style="margin: 0; padding-left: 22px; color: #1e40af; line-height: 1.9;">
+    <li>左サイドバーの <strong>「お題」</strong> に話したい議題を入力</li>
+    <li>必要であれば <strong>「キャラ A・B」</strong> を選択（デフォルトのままでもOK）</li>
+    <li><strong>▶️ 議論スタート</strong> をクリック</li>
+  </ol>
+  <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #93c5fd;
+              color: #1e40af; font-size: 0.9rem;">
+    🎲 何でも良いから試したい時は、サイドバー下部の <strong>「ランダム議論！」</strong> ボタンが便利です。
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
     )
 
-    cols = st.columns(3)
+    cols = st.columns(2)
     with cols[0]:
-        st.metric("キャラ数", f"{len(PERSONAS) - 1} + カスタム")
+        st.metric("利用可能キャラ", f"{len(PERSONAS) - 1} + カスタム")
     with cols[1]:
-        st.metric("モデル", "Gemini 2.5 Flash-Lite")
-    with cols[2]:
-        st.metric("過去ログ", f"{len(_list_past_logs())}件")
+        st.metric("使用モデル", "Gemini 2.5 Flash-Lite")
 
     st.markdown("---")
     _render_help_panel(expanded=False)
@@ -472,8 +492,8 @@ def _run_dialogue(cfg: dict) -> None:
         type="primary",
     )
     st.caption(
-        "議論内容は他のユーザーから閲覧できません。"
-        "必要であれば、いま このタイミングでダウンロードしてください。"
+        "💾 議論ログは画面を離れると参照できなくなります。"
+        "手元に残したい場合は、上のボタンからダウンロードしてください。"
     )
 
 
