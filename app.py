@@ -250,15 +250,56 @@ def _check_password() -> bool:
     if st.session_state.get("authenticated"):
         return True
 
-    st.title("🎙 AI議論")
-    st.caption("社内向け Gemini × Gemini 議論ツール")
-    pw = st.text_input("パスワード", type="password", key="_pw_input")
-    if st.button("ログイン", type="primary"):
-        if pw == expected:
-            st.session_state.authenticated = True
-            st.rerun()
-        else:
-            st.error("パスワードが違います")
+    # ログイン画面ではサイドバーを非表示にしてスッキリ
+    st.markdown(
+        """
+<style>
+    section[data-testid="stSidebar"] { display: none !important; }
+    [data-testid="stMainBlockContainer"],
+    .main .block-container {
+        max-width: 420px !important;
+        padding-top: 6rem !important;
+    }
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+    # 中央のカード型ログインフォーム
+    st.markdown(
+        """
+<div style="text-align: center; margin-bottom: 28px;">
+  <div style="font-size: 3.2rem; line-height: 1;">🎙</div>
+  <h1 style="margin: 14px 0 6px 0; font-size: 1.85rem; font-weight: 700;">
+    AI議論
+  </h1>
+  <p style="color: #888; font-size: 0.9rem; margin: 0;">
+    社内向け Gemini × Gemini 議論ツール
+  </p>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    with st.form("login_form", clear_on_submit=False, border=False):
+        pw = st.text_input(
+            "パスワード",
+            type="password",
+            placeholder="パスワードを入力",
+            label_visibility="collapsed",
+            key="_pw_input",
+        )
+        submitted = st.form_submit_button(
+            "ログイン",
+            type="primary",
+            use_container_width=True,
+        )
+        if submitted:
+            if pw == expected:
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("パスワードが違います")
     return False
 
 
