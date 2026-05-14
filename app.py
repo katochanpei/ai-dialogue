@@ -330,13 +330,13 @@ def _check_password() -> bool:
         unsafe_allow_html=True,
     )
 
-    # 中央のカード型ログインフォーム（中身のタイトルと体裁を統一）
+    # 中央のカード型ログインフォーム（中身のタイトル体裁・倍サイズ）
     st.markdown(
         """
-<div style="text-align: center; margin-bottom: 28px;">
-  <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
-  <div class="ai-giron-title-main">AI議論!</div>
-  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 6px 0 0 0;">
+<div style="text-align: center; margin-bottom: 32px;">
+  <div style="font-size: 120px; line-height: 1.1; padding-top: 8px;">🎙</div>
+  <div class="ai-giron-title-main" style="font-size: 76px !important; margin: 18px 0 8px 0 !important;">AI議論!</div>
+  <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 0 0;">
     Gemini × Gemini 議論ツール
   </p>
 </div>
