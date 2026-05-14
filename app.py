@@ -111,61 +111,121 @@ THREE_BG_HTML = """<!DOCTYPE html>
 <script>
 (function(){
   const canvas = document.getElementById('bg');
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true, powerPreference:'high-performance' });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0e1a, 0.045);
-  const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
-  camera.position.z = 9;
 
-  const N = 130;
-  const geom = new THREE.BufferGeometry();
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0a0e1a, 0.035);
+  const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.z = 11;
+
+  // 円形ソフト発光スプライトを動的生成（4方ぼかしのラジアルグラデ）
+  function makeSprite(){
+    const size = 128;
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+    g.addColorStop(0.00, 'rgba(255,255,255,1.00)');
+    g.addColorStop(0.18, 'rgba(255,255,255,0.85)');
+    g.addColorStop(0.45, 'rgba(255,255,255,0.32)');
+    g.addColorStop(0.80, 'rgba(255,255,255,0.05)');
+    g.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, size, size);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    return tex;
+  }
+  const sprite = makeSprite();
+
+  // モバイルは粒子数半減
+  const isMobile = window.innerWidth < 768;
+  const N = isMobile ? 90 : 180;
+
   const positions = new Float32Array(N*3);
   const colors = new Float32Array(N*3);
+  const sizes = new Float32Array(N);
   const velocities = [];
+
   const palette = [
-    new THREE.Color(0x60a5fa),
-    new THREE.Color(0xa78bfa),
-    new THREE.Color(0x22d3ee),
-    new THREE.Color(0x818cf8),
-    new THREE.Color(0xc4b5fd)
+    new THREE.Color(0x60a5fa),  // blue-400
+    new THREE.Color(0xa78bfa),  // violet-400
+    new THREE.Color(0x22d3ee),  // cyan-400
+    new THREE.Color(0x818cf8),  // indigo-400
+    new THREE.Color(0xc4b5fd),  // violet-300
+    new THREE.Color(0x67e8f9),  // cyan-300
   ];
+
   for (let i=0; i<N; i++){
-    positions[i*3]   = (Math.random()-0.5)*16;
-    positions[i*3+1] = (Math.random()-0.5)*16;
-    positions[i*3+2] = (Math.random()-0.5)*16;
+    positions[i*3]   = (Math.random()-0.5)*20;
+    positions[i*3+1] = (Math.random()-0.5)*20;
+    positions[i*3+2] = (Math.random()-0.5)*14;
     velocities.push({
-      x:(Math.random()-0.5)*0.010,
-      y:(Math.random()-0.5)*0.010,
-      z:(Math.random()-0.5)*0.010
+      x:(Math.random()-0.5)*0.006,
+      y:(Math.random()-0.5)*0.006,
+      z:(Math.random()-0.5)*0.006
     });
-    const c = palette[i % palette.length];
+    const c = palette[Math.floor(Math.random()*palette.length)];
     colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+    // ~10% を大きな「ハブノード」、残りは小〜中
+    sizes[i] = Math.random() < 0.10 ? (3.0 + Math.random()*1.5) : (0.7 + Math.random()*0.7);
   }
+
+  const geom = new THREE.BufferGeometry();
   geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-  const mat = new THREE.PointsMaterial({
-    size: 0.085, vertexColors: true,
-    transparent: true, opacity: 0.9,
-    blending: THREE.AdditiveBlending, depthWrite: false
+  // カスタムシェーダ：粒子ごとに size と color を独立制御
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { pointTexture: { value: sprite } },
+    vertexShader: `
+      attribute float size;
+      attribute vec3 color;
+      varying vec3 vColor;
+      void main() {
+        vColor = color;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = size * (300.0 / -mv.z);
+        gl_Position = projectionMatrix * mv;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D pointTexture;
+      varying vec3 vColor;
+      void main() {
+        vec4 t = texture2D(pointTexture, gl_PointCoord);
+        if (t.a < 0.02) discard;
+        gl_FragColor = vec4(vColor, 1.0) * t;
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
   });
   const points = new THREE.Points(geom, mat);
   scene.add(points);
 
+  // 接続線：距離で透明度を段階フェード（頂点カラーで実現）
   const linesGeom = new THREE.BufferGeometry();
   const linesMat = new THREE.LineBasicMaterial({
-    color: 0x6ea1ff, transparent: true, opacity: 0.22,
-    blending: THREE.AdditiveBlending, depthWrite: false
+    vertexColors: true,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
   const lines = new THREE.LineSegments(linesGeom, linesMat);
   scene.add(lines);
 
   function updateLines(){
     const pos = geom.attributes.position.array;
-    const buf = [];
-    const maxD = 1.9, maxD2 = maxD*maxD;
+    const posBuf = [];
+    const colBuf = [];
+    const maxD = isMobile ? 2.0 : 2.4;
+    const maxD2 = maxD*maxD;
     for (let i=0; i<N; i++){
       for (let j=i+1; j<N; j++){
         const dx = pos[i*3]-pos[j*3];
@@ -173,20 +233,27 @@ THREE_BG_HTML = """<!DOCTYPE html>
         const dz = pos[i*3+2]-pos[j*3+2];
         const d2 = dx*dx+dy*dy+dz*dz;
         if (d2 < maxD2){
-          buf.push(pos[i*3], pos[i*3+1], pos[i*3+2]);
-          buf.push(pos[j*3], pos[j*3+1], pos[j*3+2]);
+          const t = 1.0 - Math.sqrt(d2)/maxD;       // 1: 近い → 0: 遠い
+          const a = t * t * 0.65;                    // 二次フェード（自然）
+          posBuf.push(pos[i*3], pos[i*3+1], pos[i*3+2]);
+          posBuf.push(pos[j*3], pos[j*3+1], pos[j*3+2]);
+          // 加算ブレンドなので RGB に直接強度を載せると擬似アルファになる
+          const r = 0.43*a, g = 0.63*a, b = 1.00*a;
+          colBuf.push(r,g,b, r,g,b);
         }
       }
     }
-    linesGeom.setAttribute('position', new THREE.Float32BufferAttribute(buf, 3));
+    linesGeom.setAttribute('position', new THREE.Float32BufferAttribute(posBuf, 3));
+    linesGeom.setAttribute('color',    new THREE.Float32BufferAttribute(colBuf, 3));
   }
 
-  let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+  let mouseX = 0, mouseY = 0, tx = 0, ty = 0;
   window.addEventListener('pointermove', (e) => {
     mouseX = (e.clientX / window.innerWidth) * 2 - 1;
     mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
   });
 
+  const bound = 10;
   let frame = 0;
   function tick(){
     requestAnimationFrame(tick);
@@ -196,20 +263,24 @@ THREE_BG_HTML = """<!DOCTYPE html>
       pos[i*3]   += velocities[i].x;
       pos[i*3+1] += velocities[i].y;
       pos[i*3+2] += velocities[i].z;
-      if (Math.abs(pos[i*3])>8) velocities[i].x *= -1;
-      if (Math.abs(pos[i*3+1])>8) velocities[i].y *= -1;
-      if (Math.abs(pos[i*3+2])>8) velocities[i].z *= -1;
+      if (pos[i*3]   >  bound || pos[i*3]   < -bound) velocities[i].x *= -1;
+      if (pos[i*3+1] >  bound || pos[i*3+1] < -bound) velocities[i].y *= -1;
+      if (pos[i*3+2] >  bound || pos[i*3+2] < -bound) velocities[i].z *= -1;
     }
     geom.attributes.position.needsUpdate = true;
     if (frame % 3 === 0) updateLines();
-    points.rotation.y += 0.0009;
-    points.rotation.x += 0.0004;
+    // 全体をゆっくり回転
+    points.rotation.y += 0.0006;
+    points.rotation.x += 0.00025;
     lines.rotation.y = points.rotation.y;
     lines.rotation.x = points.rotation.x;
-    targetX += (mouseX * 0.6 - targetX) * 0.03;
-    targetY += (mouseY * 0.6 - targetY) * 0.03;
-    camera.position.x = targetX;
-    camera.position.y = targetY;
+    // マウス追従のパララックス
+    tx += (mouseX * 0.9 - tx) * 0.025;
+    ty += (mouseY * 0.9 - ty) * 0.025;
+    camera.position.x = tx;
+    camera.position.y = ty;
+    // 奥行き感のためカメラ Z を微弱ドリフト
+    camera.position.z = 11 + Math.sin(frame * 0.0025) * 0.6;
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
   }
