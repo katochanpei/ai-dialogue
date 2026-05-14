@@ -8,6 +8,8 @@ yield する各イベントはdict形式で、'type'フィールドで種別を�
 - {"type": "turn", "round": int, "persona": "A"|"B",
    "name": str, "emoji": str, "text": str}       : 発言
 - {"type": "facilitator", "round": int, "text": str}: 介入
+- {"type": "thinking", "role": str, "emoji": str,
+   "message": str, "for_event": str}             : 「考え中」表示（次の発言で置換）
 - {"type": "retry", "role": str, "wait_sec": float,
    "attempt": int}                               : レート制限自動リトライ
 - {"type": "agreement", "round": int}            : 合意成立
@@ -18,6 +20,7 @@ yield する各イベントはdict形式で、'type'フィールドで種別を�
 from __future__ import annotations
 
 import os
+import random
 import re
 import time
 from datetime import datetime
@@ -27,6 +30,51 @@ from typing import Callable, Iterator, TypeVar
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+
+# キャラ発言前のローディング表示用フレーズ（ランダム選択）
+THINKING_MESSAGES = [
+    "考え中...",
+    "脳みそフル回転中...",
+    "うーん...",
+    "ちょっと待って...",
+    "アイデア練り中...",
+    "言葉を選んでます...",
+    "思案中...",
+    "頭の中で議論中...",
+    "深く考察中...",
+    "ひらめき待ち...",
+    "ロジック組み立て中...",
+    "ベストな返答を模索中...",
+    "ニューロン総動員中...",
+    "返答を吟味中...",
+]
+
+FACILITATOR_THINKING_MESSAGES = [
+    "論点を整理中...",
+    "議論を俯瞰中...",
+    "次のステップを検討中...",
+    "アジェンダ調整中...",
+]
+
+SUMMARIZER_THINKING_MESSAGES = [
+    "結論をまとめ中...",
+    "要点を整理中...",
+    "ブリーフィングを作成中...",
+    "アクションを抽出中...",
+]
+
+
+def _pick_thinking() -> str:
+    return random.choice(THINKING_MESSAGES)
+
+
+def _pick_facilitator_thinking() -> str:
+    return random.choice(FACILITATOR_THINKING_MESSAGES)
+
+
+def _pick_summarizer_thinking() -> str:
+    return random.choice(SUMMARIZER_THINKING_MESSAGES)
 
 T = TypeVar("T")
 MAX_RETRY_WAIT_SEC = 60.0  # 1回の待機の上限
@@ -323,7 +371,14 @@ def dialogue_events(
     transcript: list[str] = []
 
     for round_num in range(1, max_rounds + 1):
-        # --- A の発言（リトライ対応） ---
+        # --- A の発言（リトライ対応 + 「考え中」表示） ---
+        yield {
+            "type": "thinking",
+            "role": persona_a["name"],
+            "emoji": persona_a["emoji"],
+            "message": _pick_thinking(),
+            "for_event": "turn_a",
+        }
         last_a = None
         for item_type, payload in _send_with_retry_events(chat_a, next_input):
             if item_type == "retry":
@@ -351,7 +406,14 @@ def dialogue_events(
         transcript.append(f"{persona_a['name']}: {last_a}")
         time.sleep(delay_sec)
 
-        # --- B の発言（リトライ対応） ---
+        # --- B の発言（リトライ対応 + 「考え中」表示） ---
+        yield {
+            "type": "thinking",
+            "role": persona_b["name"],
+            "emoji": persona_b["emoji"],
+            "message": _pick_thinking(),
+            "for_event": "turn_b",
+        }
         last_b = None
         for item_type, payload in _send_with_retry_events(chat_b, last_a):
             if item_type == "retry":
@@ -381,11 +443,25 @@ def dialogue_events(
 
         if round_num >= MIN_ROUNDS_BEFORE_JUDGE and _call_judge(client, last_a, last_b):
             yield {"type": "agreement", "round": round_num}
+            yield {
+                "type": "thinking",
+                "role": "要約役",
+                "emoji": "📋",
+                "message": _pick_summarizer_thinking(),
+                "for_event": "summary",
+            }
             summary = _call_summarizer(client, topic, transcript, agreed=True)
             yield {"type": "summary", "text": summary}
             return
 
         if round_num % intervention_interval == 0 and round_num < max_rounds:
+            yield {
+                "type": "thinking",
+                "role": "ファシリテーター",
+                "emoji": "🎤",
+                "message": _pick_facilitator_thinking(),
+                "for_event": "facilitator",
+            }
             fac = _call_facilitator(client, transcript)
             yield {"type": "facilitator", "round": round_num, "text": fac}
             next_input = f"{last_b}\n\n（ファシリテーターより: {fac}）"
@@ -393,6 +469,13 @@ def dialogue_events(
             next_input = last_b
 
     yield {"type": "end", "reason": "max_rounds", "round": max_rounds}
+    yield {
+        "type": "thinking",
+        "role": "要約役",
+        "emoji": "📋",
+        "message": _pick_summarizer_thinking(),
+        "for_event": "summary",
+    }
     summary = _call_summarizer(client, topic, transcript, agreed=False)
     yield {"type": "summary", "text": summary}
 

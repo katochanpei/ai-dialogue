@@ -447,6 +447,32 @@ def _run_dialogue(cfg: dict) -> None:
     chat_container = st.container()
     status_container = st.container()
     events_log: list[dict] = []
+    pending_placeholder = None  # 「考え中」用の差し替えスロット
+
+    def _show_thinking(ev: dict):
+        """次の発言が来るまで「考え中...」を表示するプレースホルダを作る。"""
+        nonlocal pending_placeholder
+        pending_placeholder = chat_container.empty()
+        with pending_placeholder.container():
+            with st.chat_message("assistant", avatar=ev.get("emoji", "💭")):
+                st.caption(f"・ {ev.get('role', '')}")
+                st.markdown(f"_{ev.get('message', '考え中...')}_")
+
+    def _swap_into_placeholder(render_fn):
+        """thinking placeholder の中身を実際の発言で置き換える。"""
+        nonlocal pending_placeholder
+        if pending_placeholder is None:
+            return False
+        with pending_placeholder.container():
+            render_fn()
+        pending_placeholder = None
+        return True
+
+    def _clear_placeholder():
+        nonlocal pending_placeholder
+        if pending_placeholder is not None:
+            pending_placeholder.empty()
+            pending_placeholder = None
 
     try:
         for ev in dialogue_events(
@@ -458,8 +484,40 @@ def _run_dialogue(cfg: dict) -> None:
             delay_sec=cfg["delay"],
         ):
             events_log.append(ev)
-            if ev.get("type") in {"agreement", "end", "error", "summary"}:
+            t = ev.get("type")
+
+            if t == "thinking":
+                _show_thinking(ev)
+
+            elif t == "turn":
+                def _render_turn(_ev=ev):
+                    role = "user" if _ev["persona"] == "A" else "assistant"
+                    with st.chat_message(role, avatar=_ev["emoji"]):
+                        st.caption(f"ターン{_ev['round']} ・ {_ev['name']}")
+                        st.write(_ev["text"])
+                if not _swap_into_placeholder(_render_turn):
+                    _render_event(ev, chat_container)
+
+            elif t == "facilitator":
+                def _render_fac(_ev=ev):
+                    with st.chat_message("ai", avatar="🎤"):
+                        st.caption(f"ファシリテーター介入（{_ev['round']}往復経過）")
+                        st.info(_ev["text"])
+                if not _swap_into_placeholder(_render_fac):
+                    _render_event(ev, chat_container)
+
+            elif t == "summary":
+                _clear_placeholder()
                 _render_event(ev, status_container)
+
+            elif t in {"agreement", "end", "error"}:
+                _clear_placeholder()
+                _render_event(ev, status_container)
+
+            elif t == "retry":
+                # placeholder はそのまま（待機後に再開）、retry通知だけ表示
+                _render_event(ev, status_container)
+
             else:
                 _render_event(ev, chat_container)
     finally:

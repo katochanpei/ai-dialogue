@@ -30,6 +30,12 @@ def _print_event(ev: dict) -> None:
     elif t == "facilitator":
         print(f"\n## 🎤 ファシリテーター介入（{ev['round']}往復経過）\n")
         print(ev["text"])
+    elif t == "thinking":
+        # CLI ではシンプルに1行表示（次の発言で見えなくなる）
+        print(
+            f"   💭 {ev.get('role', '')}: {ev.get('message', '考え中...')}",
+            file=sys.stderr,
+        )
     elif t == "retry":
         wait_sec = ev.get("wait_sec", 0)
         attempt = ev.get("attempt", 1)
