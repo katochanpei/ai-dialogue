@@ -72,9 +72,32 @@ from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS  # noqa:
 st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
-# === Sidebar styling: 幅を広げ、フォントを小さく ===
-st.markdown(
+def _generate_prism_colors() -> str:
+    """ランダムなプリズム色グラデーション文字列を生成。
+
+    色相環を7等分し、開始位置と各色の彩度・明度をランダム化することで
+    毎セッション異なる「美しい」虹色を作る。最後に最初の色を繰り返して
+    アニメーションがループしても自然に繋がるようにする。
     """
+    hue_start = random.randint(0, 360)
+    n = 7
+    parts = []
+    for i in range(n):
+        hue = (hue_start + i * (360 // n)) % 360
+        sat = random.randint(82, 95)
+        light = random.randint(58, 68)
+        parts.append(f"hsl({hue},{sat}%,{light}%)")
+    return ", ".join(parts + [parts[0]])
+
+
+# セッション中は色を固定（ボタンが安定して見える）。新しいセッションで色変わる。
+if "prism_colors" not in st.session_state:
+    st.session_state["prism_colors"] = _generate_prism_colors()
+_PRISM = st.session_state["prism_colors"]
+
+
+# === Sidebar styling: 幅を広げ、フォントを小さく ===
+_SIDEBAR_CSS = """
 <style>
     section[data-testid="stSidebar"] {
         min-width: 340px !important;
@@ -92,25 +115,35 @@ st.markdown(
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
-    /* 「ランダム議論」ボタン（サイドバー内のsecondaryボタン全般を対象） */
-    /* 主張は控えめだが、押せば始まるとわかる程度の存在感 */
+    /* 「ランダム議論」ボタン：プリズム色のうねうねアニメーション */
+    @keyframes prismFlow {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
     section[data-testid="stSidebar"] button[kind="secondary"] {
-        background: linear-gradient(135deg, #4ade80, #22c55e) !important;
-        color: #052e16 !important;
-        border: 1px solid #16a34a !important;
-        font-weight: 600 !important;
-        box-shadow: 0 0 4px rgba(34, 197, 94, 0.25) !important;
-        transition: all 0.2s ease !important;
+        background: linear-gradient(135deg, __PRISM_COLORS__) !important;
+        background-size: 400% 400% !important;
+        animation: prismFlow 9s ease-in-out infinite !important;
+        color: #fff !important;
+        border: 1px solid rgba(255, 255, 255, 0.35) !important;
+        font-weight: 700 !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45) !important;
+        box-shadow:
+            0 0 14px rgba(255, 255, 255, 0.20),
+            inset 0 0 14px rgba(255, 255, 255, 0.08) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
-        background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.45) !important;
-        transform: translateY(-1px) !important;
+        animation-duration: 4s !important;
+        box-shadow:
+            0 0 24px rgba(255, 255, 255, 0.45),
+            inset 0 0 18px rgba(255, 255, 255, 0.15) !important;
+        transform: translateY(-1px) scale(1.01) !important;
     }
 </style>
-""",
-    unsafe_allow_html=True,
-)
+"""
+st.markdown(_SIDEBAR_CSS.replace("__PRISM_COLORS__", _PRISM), unsafe_allow_html=True)
 
 
 def _render_warning_banner() -> None:
