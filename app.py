@@ -965,9 +965,9 @@ def _main_form() -> dict:
         height=160,
         key="topic_input",
         label_visibility="collapsed",
-        help="空のまま「議論スタート！」を押すと、サンプルお題で開始します。",
+        help="空のまま「議論スタート！」を押すと、20 種類のお題プールからランダムに選ばれます。",
     )
-    topic = topic_input.strip() or DEFAULT_TOPIC
+    topic = topic_input.strip() or random.choice(RANDOM_TOPICS)
 
     # ─── お題 → キャラ間の余白 ───
     st.markdown('<div style="height: 0px;"></div>', unsafe_allow_html=True)
