@@ -115,43 +115,52 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
-    /* お題入力のプレースホルダを暗く（より具体性の高いセレクタで確実に上書き） */
+    /* お題入力のプレースホルダ：前回(0.22)と暗(#3a3a3a)の中間 */
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder,
     section[data-testid="stSidebar"] textarea::placeholder,
     section[data-testid="stSidebar"] textarea::-webkit-input-placeholder {
-        color: #3a3a3a !important;
+        color: rgba(255, 255, 255, 0.15) !important;
         opacity: 1 !important;
-        -webkit-text-fill-color: #3a3a3a !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.15) !important;
     }
-    /* 「ランダム議論」ボタン：シンプルだが明確に色が流れる */
-    @keyframes prismShift {
-        0%   { background-position:   0%  50%; }
-        50%  { background-position: 100%  50%; }
-        100% { background-position:   0%  50%; }
+    /* 「ランダム議論」ボタン：高速色シフト + hue回転で確実に動いて見える */
+    @keyframes prismSweep {
+        0%   { background-position:   0% 50%; }
+        100% { background-position: 200% 50%; }
     }
-    @keyframes prismGlow {
+    @keyframes prismHueSpin {
+        0%   { filter: hue-rotate(0deg)   saturate(1.10); }
+        50%  { filter: hue-rotate(180deg) saturate(1.25); }
+        100% { filter: hue-rotate(360deg) saturate(1.10); }
+    }
+    @keyframes prismHaloPulse {
         0%, 100% {
             box-shadow:
-                0 0 12px rgba(255, 255, 255, 0.22),
-                inset 0 0 12px rgba(255, 255, 255, 0.10);
+                0 0 14px rgba(255, 255, 255, 0.25),
+                inset 0 0 14px rgba(255, 255, 255, 0.10);
         }
         50% {
             box-shadow:
-                0 0 32px rgba(255, 255, 255, 0.55),
-                inset 0 0 24px rgba(255, 255, 255, 0.22);
+                0 0 36px rgba(255, 255, 255, 0.60),
+                inset 0 0 26px rgba(255, 255, 255, 0.25);
         }
     }
-    /* セレクタを 2 階層深くして Streamlit の内部スタイルより優先 */
+    /* セレクタを深くして Streamlit の内部スタイルより確実に勝つ */
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[kind="secondary"] {
         background-color: transparent !important;
-        background-image: linear-gradient(90deg, __PRISM_COLORS__) !important;
-        background-size: 300% 100% !important;
-        background-position: 0% 50% !important;
+        /* 二回繰り返しにして、background-position 200% でループ */
+        background-image: linear-gradient(
+            90deg,
+            __PRISM_COLORS__,
+            __PRISM_COLORS__
+        ) !important;
+        background-size: 200% 100% !important;
         animation:
-            prismShift 3.5s linear infinite,
-            prismGlow 2.2s ease-in-out infinite !important;
+            prismSweep 2.2s linear infinite,
+            prismHueSpin 5s linear infinite,
+            prismHaloPulse 1.8s ease-in-out infinite !important;
         color: #ffffff !important;
         border: 2px solid rgba(255, 255, 255, 0.45) !important;
         font-weight: 800 !important;
@@ -161,8 +170,9 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
         animation:
-            prismShift 1.5s linear infinite,
-            prismGlow 0.9s ease-in-out infinite !important;
+            prismSweep 1.0s linear infinite,
+            prismHueSpin 2.5s linear infinite,
+            prismHaloPulse 0.9s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 </style>
