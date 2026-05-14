@@ -1124,6 +1124,7 @@ def _run_dialogue(cfg: dict) -> None:
     status_container = st.container()
     events_log: list[dict] = []
     pending_placeholder = None  # 「考え中」用の差し替えスロット
+    retry_placeholder = None    # リトライ通知用の差し替えスロット
 
     def _show_thinking(ev: dict):
         """次の発言が来るまで「考え中...」を表示するプレースホルダを作る。"""
@@ -1150,6 +1151,26 @@ def _run_dialogue(cfg: dict) -> None:
             pending_placeholder.empty()
             pending_placeholder = None
 
+    def _show_retry(ev: dict):
+        """リトライ通知を消去可能なスロットに描画。既存通知があれば差し替える。"""
+        nonlocal retry_placeholder
+        if retry_placeholder is None:
+            retry_placeholder = status_container.empty()
+        wait_sec = ev.get("wait_sec", 0)
+        attempt = ev.get("attempt", 1)
+        role = ev.get("role", "")
+        with retry_placeholder.container():
+            st.warning(
+                f"⏳ APIレート制限を検出（{role}）。"
+                f"{wait_sec:.0f} 秒待機してから自動リトライします（{attempt}回目）..."
+            )
+
+    def _clear_retry():
+        nonlocal retry_placeholder
+        if retry_placeholder is not None:
+            retry_placeholder.empty()
+            retry_placeholder = None
+
     try:
         for ev in dialogue_events(
             cfg["topic"],
@@ -1166,6 +1187,7 @@ def _run_dialogue(cfg: dict) -> None:
                 _show_thinking(ev)
 
             elif t == "turn":
+                _clear_retry()
                 def _render_turn(_ev=ev):
                     role = "user" if _ev["persona"] == "A" else "assistant"
                     with st.chat_message(role, avatar=_ev["emoji"]):
@@ -1175,6 +1197,7 @@ def _run_dialogue(cfg: dict) -> None:
                     _render_event(ev, chat_container)
 
             elif t == "facilitator":
+                _clear_retry()
                 def _render_fac(_ev=ev):
                     with st.chat_message("ai", avatar="🎤"):
                         st.caption(f"ファシリテーター介入（{_ev['round']}往復経過）")
@@ -1184,15 +1207,17 @@ def _run_dialogue(cfg: dict) -> None:
 
             elif t == "summary":
                 _clear_placeholder()
+                _clear_retry()
                 _render_event(ev, status_container)
 
             elif t in {"agreement", "end", "error"}:
                 _clear_placeholder()
+                _clear_retry()
                 _render_event(ev, status_container)
 
             elif t == "retry":
-                # placeholder はそのまま（待機後に再開）、retry通知だけ表示
-                _render_event(ev, status_container)
+                # 既存の retry スロットへ差し替える形で表示（古い通知は消える）
+                _show_retry(ev)
 
             else:
                 _render_event(ev, chat_container)
