@@ -301,6 +301,12 @@ _SIDEBAR_CSS = """
         font-size: 13px !important;
     }
 
+    /* ボタンラッパーは常に中央寄せ（width が 100% 未満でも中央に揃う） */
+    div[data-testid="stButton"] {
+        display: flex !important;
+        justify-content: center !important;
+    }
+
     /* ボタン間スペーサ（PC基準値、スマホで縮める） */
     .btn-gap { height: 12px; }
 
