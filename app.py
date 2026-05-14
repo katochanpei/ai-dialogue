@@ -73,20 +73,24 @@ st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
 def _generate_prism_colors() -> str:
-    """毎セッション異なる開始色相のプリズム配色を生成。
+    """ランダムなプリズム色グラデーション文字列を生成。
 
-    彩度・明度は固定（85% / 62%）にして、どの色相から始めても
-    「綺麗な虹色」が保証されるようにしてある。色相だけランダム。
+    色相環を7等分し、開始位置と各色の彩度・明度をランダム化することで
+    毎セッション異なる「美しい」虹色を作る。最後に最初の色を繰り返して
+    アニメーションがループしても自然に繋がるようにする。
     """
     hue_start = random.randint(0, 360)
     n = 7
     parts = []
     for i in range(n):
         hue = (hue_start + i * (360 // n)) % 360
-        parts.append(f"hsl({hue},85%,62%)")
+        sat = random.randint(82, 95)
+        light = random.randint(58, 68)
+        parts.append(f"hsl({hue},{sat}%,{light}%)")
     return ", ".join(parts + [parts[0]])
 
 
+# セッション中は色を固定（ボタンが安定して見える）。新しいセッションで色変わる。
 if "prism_colors" not in st.session_state:
     st.session_state["prism_colors"] = _generate_prism_colors()
 _PRISM = st.session_state["prism_colors"]
