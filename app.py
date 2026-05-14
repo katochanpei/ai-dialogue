@@ -116,11 +116,12 @@ THREE_BG_HTML = """<!DOCTYPE html>
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x010102, 0.035);
-  const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 100);
-  camera.position.z = 11;
+  // 濃い fog で粒子が距離と共に静かに溶ける
+  scene.fog = new THREE.FogExp2(0x010102, 0.07);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.z = 12;
 
-  // 円形ソフト発光スプライトを動的生成（4方ぼかしのラジアルグラデ）
+  // 円形ソフト発光スプライト
   function makeSprite(){
     const size = 128;
     const c = document.createElement('canvas');
@@ -128,9 +129,8 @@ THREE_BG_HTML = """<!DOCTYPE html>
     const ctx = c.getContext('2d');
     const g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
     g.addColorStop(0.00, 'rgba(255,255,255,1.00)');
-    g.addColorStop(0.18, 'rgba(255,255,255,0.85)');
-    g.addColorStop(0.45, 'rgba(255,255,255,0.32)');
-    g.addColorStop(0.80, 'rgba(255,255,255,0.05)');
+    g.addColorStop(0.20, 'rgba(255,255,255,0.75)');
+    g.addColorStop(0.50, 'rgba(255,255,255,0.18)');
     g.addColorStop(1.00, 'rgba(255,255,255,0.00)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, size, size);
@@ -141,37 +141,39 @@ THREE_BG_HTML = """<!DOCTYPE html>
   }
   const sprite = makeSprite();
 
-  // モバイルは粒子数半減
+  // 密度を大幅減らす（控えめ）
   const isMobile = window.innerWidth < 768;
-  const N = isMobile ? 90 : 180;
+  const N = isMobile ? 32 : 70;
 
   const positions = new Float32Array(N*3);
   const colors = new Float32Array(N*3);
   const sizes = new Float32Array(N);
   const velocities = [];
 
+  // 単色系 lavender / indigo パレット（彩度を落として静かに）
   const palette = [
-    new THREE.Color(0x60a5fa),  // blue-400
-    new THREE.Color(0xa78bfa),  // violet-400
-    new THREE.Color(0x22d3ee),  // cyan-400
+    new THREE.Color(0x5e6ad2),  // Linear primary lavender
     new THREE.Color(0x818cf8),  // indigo-400
-    new THREE.Color(0xc4b5fd),  // violet-300
-    new THREE.Color(0x67e8f9),  // cyan-300
+    new THREE.Color(0x6e7ad8),  // muted lavender
+    new THREE.Color(0x4f56b0),  // deeper indigo
   ];
 
   for (let i=0; i<N; i++){
-    positions[i*3]   = (Math.random()-0.5)*20;
-    positions[i*3+1] = (Math.random()-0.5)*20;
-    positions[i*3+2] = (Math.random()-0.5)*14;
+    positions[i*3]   = (Math.random()-0.5)*22;
+    positions[i*3+1] = (Math.random()-0.5)*22;
+    positions[i*3+2] = (Math.random()-0.5)*16;
     velocities.push({
-      x:(Math.random()-0.5)*0.006,
-      y:(Math.random()-0.5)*0.006,
-      z:(Math.random()-0.5)*0.006
+      x:(Math.random()-0.5)*0.003,
+      y:(Math.random()-0.5)*0.003,
+      z:(Math.random()-0.5)*0.003
     });
     const c = palette[Math.floor(Math.random()*palette.length)];
-    colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
-    // ~10% を大きな「ハブノード」、残りは小〜中
-    sizes[i] = Math.random() < 0.10 ? (3.0 + Math.random()*1.5) : (0.7 + Math.random()*0.7);
+    // 明度をやや落とす（×0.7）で「目立たない」を担保
+    colors[i*3]   = c.r * 0.7;
+    colors[i*3+1] = c.g * 0.7;
+    colors[i*3+2] = c.b * 0.7;
+    // 5% を中サイズハブ、残りは細かい粒
+    sizes[i] = Math.random() < 0.05 ? (1.6 + Math.random()*0.6) : (0.35 + Math.random()*0.35);
   }
 
   const geom = new THREE.BufferGeometry();
@@ -179,7 +181,6 @@ THREE_BG_HTML = """<!DOCTYPE html>
   geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-  // カスタムシェーダ：粒子ごとに size と color を独立制御
   const mat = new THREE.ShaderMaterial({
     uniforms: { pointTexture: { value: sprite } },
     vertexShader: `
@@ -189,7 +190,7 @@ THREE_BG_HTML = """<!DOCTYPE html>
       void main() {
         vColor = color;
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = size * (300.0 / -mv.z);
+        gl_PointSize = size * (260.0 / -mv.z);
         gl_Position = projectionMatrix * mv;
       }
     `,
@@ -209,43 +210,7 @@ THREE_BG_HTML = """<!DOCTYPE html>
   const points = new THREE.Points(geom, mat);
   scene.add(points);
 
-  // 接続線：距離で透明度を段階フェード（頂点カラーで実現）
-  const linesGeom = new THREE.BufferGeometry();
-  const linesMat = new THREE.LineBasicMaterial({
-    vertexColors: true,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const lines = new THREE.LineSegments(linesGeom, linesMat);
-  scene.add(lines);
-
-  function updateLines(){
-    const pos = geom.attributes.position.array;
-    const posBuf = [];
-    const colBuf = [];
-    const maxD = isMobile ? 2.0 : 2.4;
-    const maxD2 = maxD*maxD;
-    for (let i=0; i<N; i++){
-      for (let j=i+1; j<N; j++){
-        const dx = pos[i*3]-pos[j*3];
-        const dy = pos[i*3+1]-pos[j*3+1];
-        const dz = pos[i*3+2]-pos[j*3+2];
-        const d2 = dx*dx+dy*dy+dz*dz;
-        if (d2 < maxD2){
-          const t = 1.0 - Math.sqrt(d2)/maxD;       // 1: 近い → 0: 遠い
-          const a = t * t * 0.65;                    // 二次フェード（自然）
-          posBuf.push(pos[i*3], pos[i*3+1], pos[i*3+2]);
-          posBuf.push(pos[j*3], pos[j*3+1], pos[j*3+2]);
-          // 加算ブレンドなので RGB に直接強度を載せると擬似アルファになる
-          const r = 0.43*a, g = 0.63*a, b = 1.00*a;
-          colBuf.push(r,g,b, r,g,b);
-        }
-      }
-    }
-    linesGeom.setAttribute('position', new THREE.Float32BufferAttribute(posBuf, 3));
-    linesGeom.setAttribute('color',    new THREE.Float32BufferAttribute(colBuf, 3));
-  }
+  // 接続線は廃止（一番ノイズになる要素を抜くことで「プロっぽさ」が出る）
 
   let mouseX = 0, mouseY = 0, tx = 0, ty = 0;
   window.addEventListener('pointermove', (e) => {
@@ -253,7 +218,7 @@ THREE_BG_HTML = """<!DOCTYPE html>
     mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
   });
 
-  const bound = 10;
+  const bound = 11;
   let frame = 0;
   function tick(){
     requestAnimationFrame(tick);
@@ -268,19 +233,16 @@ THREE_BG_HTML = """<!DOCTYPE html>
       if (pos[i*3+2] >  bound || pos[i*3+2] < -bound) velocities[i].z *= -1;
     }
     geom.attributes.position.needsUpdate = true;
-    if (frame % 3 === 0) updateLines();
-    // 全体をゆっくり回転
-    points.rotation.y += 0.0006;
-    points.rotation.x += 0.00025;
-    lines.rotation.y = points.rotation.y;
-    lines.rotation.x = points.rotation.x;
-    // マウス追従のパララックス
-    tx += (mouseX * 0.9 - tx) * 0.025;
-    ty += (mouseY * 0.9 - ty) * 0.025;
+    // ほぼ気づかないほどの回転
+    points.rotation.y += 0.00015;
+    points.rotation.x += 0.00008;
+    // パララックスは穏やかに
+    tx += (mouseX * 0.35 - tx) * 0.02;
+    ty += (mouseY * 0.35 - ty) * 0.02;
     camera.position.x = tx;
     camera.position.y = ty;
-    // 奥行き感のためカメラ Z を微弱ドリフト
-    camera.position.z = 11 + Math.sin(frame * 0.0025) * 0.6;
+    // Z ドリフトもごく小さく
+    camera.position.z = 12 + Math.sin(frame * 0.0015) * 0.25;
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
   }
@@ -488,25 +450,32 @@ _SIDEBAR_CSS = """
         50% {
             box-shadow:
                 0 0 30px rgba(255, 255, 255, 0.45),
-                inset 0 0 22px #23252a;
+                inset 0 0 22px rgba(255, 255, 255, 0.18);
         }
     }
-    /* プライマリ：Apple Sky Link Blue（ダーク面用 #2997ff）単色 */
+    /* プライマリ：オーロラ復活 */
     div[data-testid="stButton"] button[kind="primary"] {
-        background-color: #2997ff !important;
-        background-image: none !important;
-        color: #ffffff !important;
-        border: none !important;
-        box-shadow: none !important;
-        animation: none !important;
+        background-color: #f8f5ff !important;
+        background-image:
+            radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
+            radial-gradient(at 80% 25%, __AURORA_C2__ 0%, transparent 55%),
+            radial-gradient(at 75% 80%, __AURORA_C3__ 0%, transparent 55%),
+            radial-gradient(at 25% 80%, __AURORA_C4__ 0%, transparent 55%) !important;
+        background-size: 200% 200% !important;
+        animation:
+            auroraDrift 6s ease-in-out infinite,
+            auroraGlow 2.7s ease-in-out infinite !important;
+        color: #000000 !important;
+        border: 2px solid rgba(255, 255, 255, 0.6) !important;
+        transition: transform 0.2s ease !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        background-color: #3aa0ff !important;
-        background-image: none !important;
-        animation: none !important;
+        animation:
+            auroraDrift 3s ease-in-out infinite,
+            auroraGlow 1.3s ease-in-out infinite !important;
     }
     div[data-testid="stButton"] button[kind="primary"] p {
-        color: #ffffff !important;
+        color: #000000 !important;
     }
 
     /* 戻るアクション（底部）：薄い枠付き控えめボタン
@@ -580,6 +549,27 @@ _SIDEBAR_CSS = """
         background: #141516 !important;
         background-image: none !important;
         border-color: #34343a !important;
+    }
+
+    /* === チャット吹き出し：ガラス／フロスト効果（背景の Three.js 粒子を透過させる） === */
+    [data-testid="stChatMessage"] {
+        background: rgba(15, 16, 17, 0.55) !important;
+        backdrop-filter: blur(18px) saturate(140%) !important;
+        -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 14px !important;
+        padding: 16px 20px !important;
+        margin-bottom: 12px !important;
+    }
+    /* チャット内のテキストは少し明るめに、ガラス越しの可読性確保 */
+    [data-testid="stChatMessage"] p,
+    [data-testid="stChatMessage"] span,
+    [data-testid="stChatMessage"] div {
+        color: #f1f3f5 !important;
+    }
+    /* キャプション（"ターン N · キャラ名"）はミュート */
+    [data-testid="stChatMessage"] [data-testid="stCaptionContainer"] p {
+        color: #8a8f98 !important;
     }
 
     /* === エクスパンダー：Linear rounded.lg (12px) + spacing.md (16px) + body LS (-0.05) === */
@@ -795,7 +785,7 @@ def _check_password() -> bool:
   <div class="ai-giron-title-login">AI議論!</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
-    Gemini × Gemini 議論ツール
+    AIの雑談、のぞいてみる？
   </p>
 </div>
 """,
@@ -901,20 +891,21 @@ def _render_event(ev: dict, container) -> None:
                     st.markdown(
                         f"""
 <div style="
-    background: #0f1011;
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.16) 0%,
+        rgba(30, 64, 175, 0.22) 100%);
     padding: 22px 26px;
-    border: 1px solid #23252a;
-    border-left: 4px solid #2997ff;
-    border-radius: 12px;
+    border-left: 5px solid #3b82f6;
+    border-radius: 10px;
     margin-bottom: 26px;
 ">
-  <div style="font-size: 0.78rem; color: #8a8f98; font-weight: 500;
+  <div style="font-size: 0.78rem; color: #93c5fd; font-weight: 700;
               letter-spacing: 0.18em; margin-bottom: 10px;
               text-transform: uppercase;">
     📋 お題
   </div>
   <div style="font-size: 1.65rem; font-weight: 700; line-height: 1.55;
-              color: #f7f8f8; letter-spacing: -0.6px;">
+              color: #ffffff; letter-spacing: 0.01em;">
     {html.escape(ev["topic"])}
   </div>
 </div>
@@ -949,7 +940,7 @@ def _main_form() -> dict:
   <div class="ai-giron-title-main">AI議論!</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
-    Gemini × Gemini 議論ツール
+    AIの雑談、のぞいてみる？
   </p>
 </div>
 """,
@@ -964,7 +955,7 @@ def _main_form() -> dict:
     topic_input = st.text_area(
         "お題",
         value="",
-        placeholder="Gemini × Gemini に議論してもらいたいお題を入力してください…（空のまま開始するとサンプルお題で議論します）",
+        placeholder="お題を放り込むと、AIふたりが勝手に雑談しはじめる。空のままでもサンプルで動くで",
         height=160,
         key="topic_input",
         label_visibility="collapsed",
@@ -1100,19 +1091,18 @@ def _run_dialogue(cfg: dict) -> None:
     st.markdown(
         f"""
 <div style="
-    background: #0f1011;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
     padding: 26px 32px;
-    border-radius: 12px;
+    border-radius: 14px;
     margin: 14px 0 22px 0;
-    border: 1px solid #23252a;
-    border-left: 4px solid #2997ff;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 ">
-  <div style="color: #8a8f98; font-size: 0.78rem; font-weight: 500;
+  <div style="color: #bfdbfe; font-size: 0.78rem; font-weight: 700;
               letter-spacing: 0.18em; margin-bottom: 12px; text-transform: uppercase;">
     📋 お 題
   </div>
-  <div style="color: #f7f8f8; font-size: 1.45rem; font-weight: 600;
-              line-height: 1.55; letter-spacing: -0.4px;">
+  <div style="color: #ffffff; font-size: 1.45rem; font-weight: 600;
+              line-height: 1.55;">
     {html.escape(cfg["topic"])}
   </div>
 </div>
