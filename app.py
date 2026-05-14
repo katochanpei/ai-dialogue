@@ -42,7 +42,6 @@ def _bootstrap_secrets() -> None:
         for key in (
             "GEMINI_API_KEY",
             "APP_PASSWORD",
-            "ADMIN_PASSWORD",
             "MULTI_USER_MODE",
         ):
             if key in st.secrets and not os.environ.get(key):
@@ -180,13 +179,8 @@ def _render_help_panel(expanded: bool = False) -> None:
 
 
 def _check_password() -> bool:
-    """パスワード認証。APP_PASSWORD 未設定なら認証スキップ（ローカル開発時）。
-
-    ADMIN_PASSWORD を入れると管理者モード（過去ログ閲覧可）になる。
-    UI上は通常と同じパスワード入力欄。
-    """
+    """パスワード認証。APP_PASSWORD 未設定なら認証スキップ（ローカル開発時）。"""
     expected = os.environ.get("APP_PASSWORD", "")
-    admin_pw = os.environ.get("ADMIN_PASSWORD", "")
     if not expected:
         return True
     if st.session_state.get("authenticated"):
@@ -196,13 +190,8 @@ def _check_password() -> bool:
     st.caption("社内向け Gemini × Gemini 議論ツール")
     pw = st.text_input("パスワード", type="password", key="_pw_input")
     if st.button("ログイン", type="primary"):
-        if admin_pw and pw == admin_pw:
+        if pw == expected:
             st.session_state.authenticated = True
-            st.session_state.is_admin = True
-            st.rerun()
-        elif pw == expected:
-            st.session_state.authenticated = True
-            st.session_state.is_admin = False
             st.rerun()
         else:
             st.error("パスワードが違います")
@@ -212,7 +201,6 @@ def _check_password() -> bool:
 def _init_state() -> None:
     defaults = {
         "running": False,
-        "is_admin": False,
         "last_log_path": None,
         "last_log_md": None,
         "last_log_name": None,
@@ -335,13 +323,8 @@ def _sidebar() -> dict:
             help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
         )
 
-        is_admin = st.session_state.get("is_admin", False)
-        show_past_logs = is_admin or not _is_multi_user_mode()
-
-        if show_past_logs:
+        if not _is_multi_user_mode():
             st.markdown("---")
-            if is_admin and _is_multi_user_mode():
-                st.caption("🕵️ 管理者モード（全員のログを閲覧可）")
             st.subheader("📜 過去ログ")
             log_files = _list_past_logs()
             if log_files:
@@ -521,23 +504,30 @@ def _run_dialogue(cfg: dict) -> None:
             else:
                 _render_event(ev, chat_container)
     finally:
+        from datetime import datetime as _dt
         log_md = build_log_markdown(
             events_log,
             cfg["topic"],
             cfg["persona_a"]["name"],
             cfg["persona_b"]["name"],
         )
-        # ログは常にディスクに保存（管理者が後で閲覧できるように）。
-        # ただし一般ユーザーUI上は隠れる（MULTI_USER_MODE時）。
-        log_path = save_log(
-            events_log,
-            cfg["topic"],
-            cfg["persona_a"]["name"],
-            cfg["persona_b"]["name"],
-        )
-        st.session_state.last_log_path = log_path
+        if _is_multi_user_mode():
+            # クラウド共有モード: ディスクには保存しない（誰も見られないため無駄）
+            timestamp = _dt.now().strftime("%Y-%m-%d_%H%M%S")
+            log_filename = f"{timestamp}_dialogue.md"
+            st.session_state.last_log_path = None
+        else:
+            # ローカル: ディスクに保存して履歴に残す
+            log_path = save_log(
+                events_log,
+                cfg["topic"],
+                cfg["persona_a"]["name"],
+                cfg["persona_b"]["name"],
+            )
+            log_filename = log_path.name
+            st.session_state.last_log_path = log_path
         st.session_state.last_log_md = log_md
-        st.session_state.last_log_name = log_path.name
+        st.session_state.last_log_name = log_filename
         st.session_state.running = False
 
     st.markdown("---")
@@ -545,7 +535,7 @@ def _run_dialogue(cfg: dict) -> None:
     st.download_button(
         "議論ログをダウンロード",
         data=log_md.encode("utf-8"),
-        file_name=log_path.name,
+        file_name=log_filename,
         mime="text/markdown",
         type="primary",
     )

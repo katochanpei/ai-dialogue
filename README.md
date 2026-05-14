@@ -122,12 +122,10 @@ UI からはサイドバーで過去ログを選んで閲覧、ダウンロー�
      ```toml
      GEMINI_API_KEY = "<your-gemini-api-key>"
      APP_PASSWORD = "<set-app-password-here>"
-     ADMIN_PASSWORD = "<set-admin-password-here>"
      MULTI_USER_MODE = "true"
      ```
-   - `MULTI_USER_MODE = "true"` 必須（一般ユーザー間で過去ログが見えるのを防ぐ）
-   - `ADMIN_PASSWORD` は同僚にバレないようにオーナーだけが知ってるパスワードに。
-     このパスワードでログインすると過去ログ閲覧UIが解放される 🕵️
+   - `MULTI_USER_MODE = "true"` 必須（過去ログを保存・閲覧不可にして共有時の
+     プライバシーを守るため）
 
 3. **Deploy** をクリック
    - 数分で `https://<app-name>.streamlit.app` が発行される
