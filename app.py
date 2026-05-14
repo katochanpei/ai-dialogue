@@ -11,6 +11,7 @@ import random
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 RANDOM_TOPICS = [
@@ -133,17 +134,18 @@ _SIDEBAR_CSS = """
     /* === ボタン共通：ピル型 + Dela Gothic One === */
     div[data-testid="stButton"] button {
         border-radius: 999px !important;
-        padding: 14px 20px !important;
+        padding: 18px 28px !important;
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 18px !important;
+        font-size: 22px !important;
         font-weight: 400 !important;
         letter-spacing: 0.01em !important;
         white-space: nowrap !important;
         line-height: 1.1 !important;
-        min-height: 56px !important;
+        min-height: 64px !important;
     }
     div[data-testid="stButton"] button p {
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
+        font-size: 22px !important;
         white-space: nowrap !important;
     }
 
@@ -204,14 +206,14 @@ _SIDEBAR_CSS = """
         transform: translateY(-1px) scale(1.02) !important;
     }
 
-    /* === エクスパンダー：コンパクト === */
+    /* === エクスパンダー === */
     [data-testid="stExpander"] details > summary {
-        padding-top: 7px !important;
-        padding-bottom: 7px !important;
-        font-size: 11px !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        font-size: 13px !important;
     }
     [data-testid="stExpander"] details > summary p {
-        font-size: 11px !important;
+        font-size: 13px !important;
     }
 
     .ai-giron-title-main {
@@ -466,35 +468,43 @@ def _main_form() -> dict:
         unsafe_allow_html=True,
     )
 
-    # === デコラティブ見出し（SVG で Figma 完全再現） ===
-    st.markdown(
+    # === デコラティブ見出し（iframe + SVG で Figma 完全再現） ===
+    components.html(
         """
+<!DOCTYPE html>
+<html>
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
+<style>
+  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
+</style>
+</head>
+<body>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 100"
      preserveAspectRatio="xMidYMid meet"
-     style="width:100%; max-width:720px; display:block; margin:8px auto 18px auto;">
+     style="width:100%; height:100%; display:block;">
   <defs>
     <linearGradient id="aiGironGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#cf22ff"/>
       <stop offset="100%" stop-color="#0effb3"/>
     </linearGradient>
   </defs>
-  <!-- 左スラッシュ \\ -->
-  <line x1="6" y1="24" x2="37" y2="74"
-        stroke="url(#aiGironGrad)" stroke-width="2"/>
-  <!-- 右スラッシュ / -->
-  <line x1="714" y1="24" x2="683" y2="74"
-        stroke="url(#aiGironGrad)" stroke-width="2"/>
-  <!-- 見出しテキスト：transparent fill + gradient stroke -->
-  <text x="360" y="72" text-anchor="middle"
+  <line x1="8" y1="24" x2="38" y2="74"
+        stroke="url(#aiGironGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="712" y1="24" x2="682" y2="74"
+        stroke="url(#aiGironGrad)" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="360" y="74" text-anchor="middle"
         font-family="'Dela Gothic One', sans-serif"
         fill="none"
-        stroke="url(#aiGironGrad)" stroke-width="0.82"
+        stroke="url(#aiGironGrad)" stroke-width="1.5"
         paint-order="stroke">
-    <tspan font-size="64.195">議論</tspan><tspan font-size="36.212">してもらいたい</tspan><tspan font-size="64.195">お題</tspan><tspan font-size="36.212">は？</tspan>
+    <tspan font-size="64.2">議論</tspan><tspan font-size="36.2">してもらいたい</tspan><tspan font-size="64.2">お題</tspan><tspan font-size="36.2">は？</tspan>
   </text>
 </svg>
+</body>
+</html>
 """,
-        unsafe_allow_html=True,
+        height=110,
     )
 
     # === お題テキストエリア ===
