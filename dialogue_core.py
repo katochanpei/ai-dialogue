@@ -81,8 +81,26 @@ MAX_RETRY_WAIT_SEC = 60.0  # 1回の待機の上限
 MAX_RETRY_ATTEMPTS = 2  # 上限を超えたらエラーをそのまま返す
 
 
+def _is_rate_limit_error(error_msg: str) -> bool:
+    return "RESOURCE_EXHAUSTED" in error_msg or "429" in error_msg
+
+
+def _is_unavailable_error(error_msg: str) -> bool:
+    """503 UNAVAILABLE（モデル混雑など、サーバ側の一時的不調）。"""
+    return "UNAVAILABLE" in error_msg or "503" in error_msg
+
+
+def _is_transient_error(error_msg: str) -> bool:
+    """リトライで自動回復が期待できる過渡的なエラー全般。"""
+    return _is_rate_limit_error(error_msg) or _is_unavailable_error(error_msg)
+
+
 def _parse_retry_delay(error_msg: str) -> float:
-    """429エラーメッセージから推奨待機秒数を抽出。"""
+    """エラーメッセージから推奨待機秒数を推定。
+
+    - 429 系: サーバが retryDelay を返す。なければ 30 秒。
+    - 503 系: retryDelay は通常無いので、短めの 4 秒で素早く再試行。
+    """
     # "Please retry in 20.007059734s." 形式
     m = re.search(r"retry in ([\d.]+)s", error_msg)
     if m:
@@ -91,11 +109,9 @@ def _parse_retry_delay(error_msg: str) -> float:
     m = re.search(r"'retryDelay':\s*'(\d+)s'", error_msg)
     if m:
         return float(m.group(1))
-    return 30.0  # フォールバック
-
-
-def _is_rate_limit_error(error_msg: str) -> bool:
-    return "RESOURCE_EXHAUSTED" in error_msg or "429" in error_msg
+    if _is_unavailable_error(error_msg):
+        return 4.0
+    return 30.0
 
 
 def _safe_call_with_retry(
@@ -103,7 +119,7 @@ def _safe_call_with_retry(
     *,
     on_retry: Callable[[float, int], None] | None = None,
 ) -> T:
-    """関数呼び出しを 429 自動リトライ付きで実行する。
+    """関数呼び出しを 429 / 503 自動リトライ付きで実行する。
 
     最大 MAX_RETRY_ATTEMPTS 回まで再試行。リトライ時は on_retry コールバックで通知。
     リトライ上限を超えたら最後の例外をそのまま re-raise。
@@ -113,7 +129,7 @@ def _safe_call_with_retry(
             return fn()
         except Exception as e:
             msg = str(e)
-            if _is_rate_limit_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
+            if _is_transient_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
                 delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
                 if on_retry:
                     on_retry(delay, attempt + 1)
@@ -337,7 +353,7 @@ def _call_summarizer(
 
 
 def _send_with_retry_events(chat, message: str) -> Iterator[tuple[str, object]]:
-    """`chat.send_message` を 429 自動リトライ付きで実行するジェネレータ。
+    """`chat.send_message` を 429 / 503 自動リトライ付きで実行するジェネレータ。
 
     yields:
         ("retry", {"wait_sec": float, "attempt": int}) - リトライ前
@@ -351,7 +367,7 @@ def _send_with_retry_events(chat, message: str) -> Iterator[tuple[str, object]]:
             return
         except Exception as e:
             msg = str(e)
-            if _is_rate_limit_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
+            if _is_transient_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
                 delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
                 yield ("retry", {"wait_sec": delay, "attempt": attempt + 1})
                 time.sleep(delay)
