@@ -412,13 +412,14 @@ _SIDEBAR_CSS = """
         -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
 
-    /* セレクトボックスのラベル：Apple fine-print 12px に近づける */
+    /* セレクトボックスのラベル：Linear eyebrow タイポ（13px / 500 / +0.4px LS / uppercase） */
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSelectbox"] label p {
-        font-size: 12px !important;
+        font-size: 13px !important;
         color: rgba(255, 255, 255, 0.5) !important;
         font-weight: 500 !important;
-        letter-spacing: -0.12px !important;
+        letter-spacing: 0.4px !important;
+        text-transform: uppercase !important;
     }
     /* セレクトボックス本体：Apple search-input 寸法（44px 高 / 12×20 padding / rounded.md = 11px） */
     div[data-testid="stSelectbox"] > div > div,
@@ -519,11 +520,12 @@ _SIDEBAR_CSS = """
         animation: none !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         color: rgba(255, 255, 255, 0.7) !important;
-        padding: 10px 20px !important;
+        padding: 8px 14px !important;
         min-height: auto !important;
         font-family: 'Inter', sans-serif !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
         font-weight: 500 !important;
+        line-height: 1.20 !important;
         box-shadow: none !important;
         border-radius: 8px !important;
         letter-spacing: 0 !important;
@@ -532,8 +534,9 @@ _SIDEBAR_CSS = """
     body [data-testid="element-container"]:has(.back-action-wrap)
         + [data-testid="element-container"] button[kind="secondary"] p {
         font-family: 'Inter', sans-serif !important;
-        font-size: 13px !important;
+        font-size: 14px !important;
         color: rgba(255, 255, 255, 0.7) !important;
+        letter-spacing: 0 !important;
     }
     body [data-testid="element-container"]:has(.back-action-wrap)
         + [data-testid="element-container"] button[kind="secondary"]:hover {
@@ -578,10 +581,10 @@ _SIDEBAR_CSS = """
         background-image: none !important;
     }
 
-    /* === エクスパンダー：Apple rounded.md (11px) と caption (14px / -0.224px LS) === */
+    /* === エクスパンダー：Linear rounded.lg (12px) + spacing.md (16px) + body LS (-0.05) === */
     [data-testid="stExpander"] {
         border: 1px solid rgba(255, 255, 255, 0.10) !important;
-        border-radius: 11px !important;
+        border-radius: 12px !important;
         background: transparent !important;
         overflow: hidden !important;
     }
@@ -590,14 +593,14 @@ _SIDEBAR_CSS = """
         background: transparent !important;
     }
     [data-testid="stExpander"] details > summary {
-        padding: 12px 17px !important;
+        padding: 12px 16px !important;
         font-size: 14px !important;
-        letter-spacing: -0.224px !important;
+        letter-spacing: -0.05px !important;
         border: none !important;
     }
     [data-testid="stExpander"] details > summary p {
         font-size: 14px !important;
-        letter-spacing: -0.224px !important;
+        letter-spacing: -0.05px !important;
     }
 
     /* ボタン間スペーサ（PC基準値、スマホで縮める） */
@@ -647,11 +650,10 @@ _SIDEBAR_CSS = """
             margin-left: auto !important;
             margin-right: auto !important;
         }
-        /* 戻る系（back-action-wrap 直後）の secondary は対象外に戻す */
+        /* 戻る系（back-action-wrap 直後）の secondary はタップ可能領域確保のため少し広めに */
         body [data-testid="element-container"]:has(.back-action-wrap)
             + [data-testid="element-container"] button[kind="secondary"] {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
+            padding: 12px 16px !important;
             width: auto !important;
         }
         /* ボタン間スペーサを半減 */
@@ -665,6 +667,7 @@ _SIDEBAR_CSS = """
         text-align: center;
         margin: 14px auto 4px auto !important;
         line-height: 1.1;
+        letter-spacing: -1.0px !important;
         white-space: nowrap !important;
         width: fit-content !important;
         display: block !important;
@@ -675,7 +678,8 @@ _SIDEBAR_CSS = """
         color: white !important;
         text-align: center;
         margin: 18px 0 0px 0 !important;
-        line-height: 1.1;
+        line-height: 1.05;
+        letter-spacing: -1.8px !important;
         white-space: nowrap !important;
     }
     .ai-giron-vs {
@@ -684,6 +688,7 @@ _SIDEBAR_CSS = """
         color: white;
         text-align: center;
         padding-top: 28px;
+        letter-spacing: -0.6px;
     }
 </style>
 """
