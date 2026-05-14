@@ -11,7 +11,6 @@ import random
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 
 RANDOM_TOPICS = [
@@ -474,58 +473,19 @@ def _main_form() -> dict:
         unsafe_allow_html=True,
     )
 
-    # === デコラティブ見出し（タイトルより広く） ===
-    components.html(
-        """
-<!DOCTYPE html>
-<html>
-<head>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
-<style>
-  html, body { margin:0; padding:0; background:transparent; overflow:hidden; }
-</style>
-</head>
-<body>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 140"
-     preserveAspectRatio="xMidYMid meet"
-     style="width:100%; height:100%; display:block;">
-  <defs>
-    <linearGradient id="aiGironGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#cf22ff"/>
-      <stop offset="100%" stop-color="#0effb3"/>
-    </linearGradient>
-  </defs>
-  <line x1="6" y1="36" x2="46" y2="104"
-        stroke="url(#aiGironGrad)" stroke-width="3" stroke-linecap="round"/>
-  <line x1="814" y1="36" x2="774" y2="104"
-        stroke="url(#aiGironGrad)" stroke-width="3" stroke-linecap="round"/>
-  <text x="410" y="100" text-anchor="middle"
-        font-family="'Dela Gothic One', sans-serif"
-        fill="none"
-        stroke="url(#aiGironGrad)" stroke-width="1.8"
-        paint-order="stroke">
-    <tspan font-size="88">議論</tspan><tspan font-size="48">してもらいたい</tspan><tspan font-size="88">お題</tspan><tspan font-size="48">は？</tspan>
-  </text>
-</svg>
-</body>
-</html>
-""",
-        height=150,
-    )
-
-    # === 🌊 大河（大陸1→大陸2 の境界） ===
-    st.markdown('<div style="height: 56px;"></div>', unsafe_allow_html=True)
+    # === 🌊 大河（タイトル → フォーム） ===
+    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
 
     # === 🌎 大陸 2: フォーム本体 ===
-    # お題テキストエリア
+    # お題テキストエリア（プレースホルダで入力を促す）
     topic_input = st.text_area(
         "お題",
         value="",
-        placeholder=DEFAULT_TOPIC,
+        placeholder="議論してもらいたいお題を入力してください…（空のまま開始するとサンプルお題で議論します）",
         height=160,
         key="topic_input",
         label_visibility="collapsed",
-        help="議論したいテーマを入力。空のままでもプレースホルダ例で開始できます。",
+        help="空のまま「議論スタート！」を押すと、サンプルお題で開始します。",
     )
     topic = topic_input.strip() or DEFAULT_TOPIC
 
