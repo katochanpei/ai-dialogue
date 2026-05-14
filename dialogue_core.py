@@ -451,7 +451,7 @@ def dialogue_events(
                 "for_event": "summary",
             }
             summary = _call_summarizer(client, topic, transcript, agreed=True)
-            yield {"type": "summary", "text": summary}
+            yield {"type": "summary", "text": summary, "topic": topic}
             return
 
         if round_num % intervention_interval == 0 and round_num < max_rounds:
@@ -477,7 +477,7 @@ def dialogue_events(
         "for_event": "summary",
     }
     summary = _call_summarizer(client, topic, transcript, agreed=False)
-    yield {"type": "summary", "text": summary}
+    yield {"type": "summary", "text": summary, "topic": topic}
 
 
 def build_log_markdown(
@@ -527,6 +527,9 @@ def build_log_markdown(
             lines.append("")
             lines.append("# 📋 結論ブリーフィング")
             lines.append("")
+            if ev.get("topic"):
+                lines.append(f"**📋 議論のお題:** {ev['topic']}")
+                lines.append("")
             lines.append(ev["text"])
             lines.append("")
         elif t == "retry":

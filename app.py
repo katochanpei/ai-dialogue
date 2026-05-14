@@ -275,6 +275,27 @@ def _render_event(ev: dict, container) -> None:
             st.markdown("# 📋 結論ブリーフィング")
             st.caption("議論の要約と、あなたの次のアクション")
             with st.container(border=True):
+                if ev.get("topic"):
+                    st.markdown(
+                        f"""
+<div style="
+    background: rgba(59, 130, 246, 0.10);
+    padding: 12px 16px;
+    border-left: 4px solid #3b82f6;
+    border-radius: 6px;
+    margin-bottom: 16px;
+">
+  <div style="font-size: 0.72rem; color: #93c5fd; font-weight: 700;
+              letter-spacing: 0.14em; margin-bottom: 4px;">
+    📋 議論のお題
+  </div>
+  <div style="font-size: 1rem; line-height: 1.5;">
+    {html.escape(ev["topic"])}
+  </div>
+</div>
+""",
+                        unsafe_allow_html=True,
+                    )
                 st.markdown(ev["text"])
     elif t == "error":
         container.error(f"❌ {ev['text']}")
