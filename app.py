@@ -115,42 +115,36 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
-    /* お題入力のプレースホルダ：前回(0.22)と暗(#3a3a3a)の中間 */
+    /* お題入力のプレースホルダ */
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder,
     section[data-testid="stSidebar"] textarea::placeholder,
     section[data-testid="stSidebar"] textarea::-webkit-input-placeholder {
-        color: rgba(255, 255, 255, 0.15) !important;
+        color: rgba(255, 255, 255, 0.30) !important;
         opacity: 1 !important;
-        -webkit-text-fill-color: rgba(255, 255, 255, 0.15) !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
-    /* 「ランダム議論」ボタン：高速色シフト + hue回転で確実に動いて見える */
+    /* 「ランダム議論」ボタン：元のプリズム配色をゆっくり流す */
     @keyframes prismSweep {
         0%   { background-position:   0% 50%; }
         100% { background-position: 200% 50%; }
     }
-    @keyframes prismHueSpin {
-        0%   { filter: hue-rotate(0deg)   saturate(1.10); }
-        50%  { filter: hue-rotate(180deg) saturate(1.25); }
-        100% { filter: hue-rotate(360deg) saturate(1.10); }
-    }
     @keyframes prismHaloPulse {
         0%, 100% {
             box-shadow:
-                0 0 14px rgba(255, 255, 255, 0.25),
+                0 0 14px rgba(255, 255, 255, 0.22),
                 inset 0 0 14px rgba(255, 255, 255, 0.10);
         }
         50% {
             box-shadow:
-                0 0 36px rgba(255, 255, 255, 0.60),
-                inset 0 0 26px rgba(255, 255, 255, 0.25);
+                0 0 30px rgba(255, 255, 255, 0.50),
+                inset 0 0 24px rgba(255, 255, 255, 0.20);
         }
     }
     /* セレクタを深くして Streamlit の内部スタイルより確実に勝つ */
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[kind="secondary"] {
         background-color: transparent !important;
-        /* 二回繰り返しにして、background-position 200% でループ */
         background-image: linear-gradient(
             90deg,
             __PRISM_COLORS__,
@@ -158,21 +152,19 @@ _SIDEBAR_CSS = """
         ) !important;
         background-size: 200% 100% !important;
         animation:
-            prismSweep 2.2s linear infinite,
-            prismHueSpin 5s linear infinite,
-            prismHaloPulse 1.8s ease-in-out infinite !important;
+            prismSweep 4.5s linear infinite,
+            prismHaloPulse 3.6s ease-in-out infinite !important;
         color: #ffffff !important;
-        border: 2px solid rgba(255, 255, 255, 0.45) !important;
+        border: 2px solid rgba(255, 255, 255, 0.40) !important;
         font-weight: 800 !important;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55) !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.50) !important;
         transition: transform 0.2s ease !important;
     }
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
         animation:
-            prismSweep 1.0s linear infinite,
-            prismHueSpin 2.5s linear infinite,
-            prismHaloPulse 0.9s ease-in-out infinite !important;
+            prismSweep 2.2s linear infinite,
+            prismHaloPulse 1.8s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 </style>
