@@ -136,7 +136,7 @@ _SIDEBAR_CSS = """
         font-weight: 500 !important;
     }
 
-    /* === ボタン共通：ピル型 + Dela Gothic One（デカく） === */
+    /* === ボタン共通：ピル型 + Dela Gothic One（デカく・コンテンツ左寄せ） === */
     div[data-testid="stButton"] button {
         border-radius: 999px !important;
         padding: 22px 44px !important;
@@ -147,11 +147,14 @@ _SIDEBAR_CSS = """
         white-space: nowrap !important;
         line-height: 1.1 !important;
         min-height: 76px !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
     }
     div[data-testid="stButton"] button p {
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
         font-size: 24px !important;
         white-space: nowrap !important;
+        text-align: left !important;
     }
 
     /* プライマリボタン：マゼンタ→ミントの派手グラデ */
@@ -160,7 +163,6 @@ _SIDEBAR_CSS = """
         color: #ffffff !important;
         border: none !important;
         box-shadow: 0 0 18px rgba(207, 34, 255, 0.35) !important;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
         box-shadow: 0 0 28px rgba(207, 34, 255, 0.6),
@@ -199,9 +201,8 @@ _SIDEBAR_CSS = """
         animation:
             auroraDrift 6s ease-in-out infinite,
             auroraGlow 2.7s ease-in-out infinite !important;
-        color: #2d1b4e !important;
+        color: #000000 !important;
         border: 2px solid rgba(255, 255, 255, 0.6) !important;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6) !important;
         transition: transform 0.2s ease !important;
     }
     div[data-testid="stButton"] button[kind="secondary"]:hover {
@@ -211,14 +212,30 @@ _SIDEBAR_CSS = """
         transform: translateY(-1px) scale(1.02) !important;
     }
 
-    /* === エクスパンダー === */
+    /* === エクスパンダー：枠なし === */
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] details {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
     [data-testid="stExpander"] details > summary {
         padding-top: 10px !important;
         padding-bottom: 10px !important;
         font-size: 13px !important;
+        border: none !important;
     }
     [data-testid="stExpander"] details > summary p {
         font-size: 13px !important;
+    }
+
+    /* スマホ：VSの上下gap半減 */
+    @media (max-width: 768px) {
+        .ai-giron-vs {
+            padding-top: 8px !important;
+            padding-bottom: 0 !important;
+            font-size: 20px !important;
+        }
     }
 
     .ai-giron-title-main {
@@ -313,15 +330,13 @@ def _check_password() -> bool:
         unsafe_allow_html=True,
     )
 
-    # 中央のカード型ログインフォーム
+    # 中央のカード型ログインフォーム（中身のタイトルと体裁を統一）
     st.markdown(
         """
 <div style="text-align: center; margin-bottom: 28px;">
-  <div style="font-size: 3.2rem; line-height: 1;">🎙</div>
-  <h1 style="margin: 14px 0 6px 0; font-size: 1.85rem; font-weight: 700;">
-    AI議論
-  </h1>
-  <p style="color: #888; font-size: 0.9rem; margin: 0;">
+  <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
+  <div class="ai-giron-title-main">AI議論!</div>
+  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 6px 0 0 0;">
     社内向け Gemini × Gemini 議論ツール
   </p>
 </div>
