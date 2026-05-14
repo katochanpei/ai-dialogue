@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from personas import THINKING_PHRASES
+from personas import THINKING_PHRASES, PERSONA_QUIRKS
 
 
 # キャラ発言前のローディング表示用フレーズ（ランダム選択）
@@ -207,8 +207,35 @@ VARIATION_HINT = """
 
 
 def _build_system_prompt(persona: dict) -> str:
-    """ペルソナの基本プロンプトに共通の表現バリエーション指示を付与して返す。"""
-    return f"{persona['system']}\n{VARIATION_HINT}"
+    """ペルソナの基本プロンプトに共通トーン指示 + キャラ別口癖サンプルを付与して返す。"""
+    quirks = PERSONA_QUIRKS.get(persona.get("key", ""), "")
+    quirks_block = (
+        f"\n\n【口癖サンプル（あくまで方向性。毎ターン同じ語を連発しない）】\n{quirks}"
+        if quirks
+        else ""
+    )
+    return f"{persona['system']}\n{VARIATION_HINT}{quirks_block}"
+
+
+# === ボケ強制モード ===
+# N% の確率で次の発言時に「ボケて」とシステム側から指示を差し込み、ノリと崩しを足す。
+BOKE_PROB = 0.18
+BOKE_MODES = [
+    "今回だけ：話を完全に別の方向に逸らして、お題から逃げて1〜2文で軽く返して。",
+    "今回だけ：皮肉と短いツッコミだけで1〜2文返して。",
+    "今回だけ：全然関係ない興味（食べ物・天気・別キャラの見た目とか）に飛んで1〜2文返して。",
+    "今回だけ：ノリで適当に同意して、すぐ別の話題を振って1〜2文返して。",
+    "今回だけ：相手の発言にわざと噛み合わない返しを1〜2文してみて。",
+    "今回だけ：キャラを少し崩して、軽くボケるか茶化して1〜2文返して。",
+]
+
+
+def _maybe_inject_boke(message: str) -> str:
+    """確率で「今回だけボケて」の特別指示をメッセージ末尾に差し込む。"""
+    if random.random() < BOKE_PROB:
+        boke = random.choice(BOKE_MODES)
+        return f"{message}\n\n【今回だけ特別指示】{boke}"
+    return message
 
 
 def check_api_availability() -> tuple[bool, str, str]:
@@ -464,7 +491,7 @@ def dialogue_events(
             "for_event": "turn_a",
         }
         last_a = None
-        for item_type, payload in _send_with_retry_events(chat_a, next_input):
+        for item_type, payload in _send_with_retry_events(chat_a, _maybe_inject_boke(next_input)):
             if item_type == "retry":
                 yield {
                     "type": "retry",
@@ -499,7 +526,7 @@ def dialogue_events(
             "for_event": "turn_b",
         }
         last_b = None
-        for item_type, payload in _send_with_retry_events(chat_b, last_a):
+        for item_type, payload in _send_with_retry_events(chat_b, _maybe_inject_boke(last_a)):
             if item_type == "retry":
                 yield {
                     "type": "retry",
