@@ -99,15 +99,25 @@ _AURORA = st.session_state["aurora_palette"]
 _SIDEBAR_CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
-    /* サイドバー非表示 */
+    /* サイドバー非表示 + メインを左右真ん中に */
     section[data-testid="stSidebar"] { display: none !important; }
     [data-testid="collapsedControl"] { display: none !important; }
+    [data-testid="stMain"] {
+        margin-left: 0 !important;
+        width: 100% !important;
+        align-items: center !important;
+    }
+    [data-testid="stAppViewContainer"] > section {
+        margin-left: 0 !important;
+    }
 
     /* メイン中央寄せ：タイトルは広く、フォームは狭く */
     [data-testid="stMainBlockContainer"],
     .main .block-container {
         max-width: 820px !important;
         padding-top: 3rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
     /* お題テキストエリアは少し内側に絞ってタイトルより狭く見せる */
