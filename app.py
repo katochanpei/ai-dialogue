@@ -243,18 +243,22 @@ _SIDEBAR_CSS = """
         font-size: 38px !important;
         color: white !important;
         text-align: center;
-        margin: 14px 0 4px 0 !important;
+        margin: 14px auto 4px auto !important;
         line-height: 1.1;
         white-space: nowrap !important;
+        width: fit-content !important;
+        display: block !important;
     }
     .ai-giron-title-login {
         font-family: 'Dela Gothic One', sans-serif !important;
         font-size: 76px !important;
         color: white !important;
         text-align: center;
-        margin: 18px 0 8px 0 !important;
+        margin: 18px auto 8px auto !important;
         line-height: 1.1;
         white-space: nowrap !important;
+        width: fit-content !important;
+        display: block !important;
     }
     .ai-giron-vs {
         font-family: 'Dela Gothic One', sans-serif !important;
