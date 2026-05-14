@@ -78,7 +78,7 @@ def _pick_summarizer_thinking() -> str:
 
 T = TypeVar("T")
 MAX_RETRY_WAIT_SEC = 60.0  # 1回の待機の上限
-MAX_RETRY_ATTEMPTS = 2  # 上限を超えたらエラーをそのまま返す
+MAX_RETRY_ATTEMPTS = 3  # 上限を超えたらエラーをそのまま返す
 
 
 def _is_rate_limit_error(error_msg: str) -> bool:
@@ -130,7 +130,11 @@ def _safe_call_with_retry(
         except Exception as e:
             msg = str(e)
             if _is_transient_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
-                delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
+                base = _parse_retry_delay(msg)
+                # 503 はサーバが retryDelay を返さないので、指数バックオフで広げる
+                if _is_unavailable_error(msg):
+                    base = base * (2 ** attempt)
+                delay = min(max(base, 1.0), MAX_RETRY_WAIT_SEC)
                 if on_retry:
                     on_retry(delay, attempt + 1)
                 time.sleep(delay)
@@ -305,8 +309,7 @@ def _call_summarizer(
     """議論を要約し、依頼者向けの実用ブリーフィングを生成する。"""
     history = "\n".join(transcript)
     state = "両者が合意した" if agreed else "合意に至らなかった（上限到達）"
-    prompt = f"""あなたは議論の要約役 兼 アドバイザーです。
-以下の議論を読んで、依頼者（人間）に向けた実用的なブリーフィングを作成してください。
+    prompt = f"""あなたは議論の要約役です。以下の議論を読んで、依頼者向けに簡潔なまとめを作成してください。
 
 【お題】
 {topic}
@@ -318,30 +321,22 @@ def _call_summarizer(
 {history}
 
 【出力ルール】
-- 必ず下記のMarkdown構造で出力（見出し・絵文字もそのまま）
-- 「結論」は具体的に。「誰向け・何ができる・どう価値を出す」が分かる粒度
-- 「やるべきこと」は依頼者が今日・明日に動ける具体アクション
-- 全体700〜1000字、読みやすく
+- 下記のMarkdown構造のみで出力（見出し・絵文字はそのまま）
+- 「結論」は2〜3行で具体的に（誰向け・何ができる・どう価値）
+- 「要点」は最大3つ、各1行
+- 「次にやること」は最も重要な1つだけ
+- 全体250〜350字。冗長な前置きや言い換えは省く
 
 ## 🎯 結論
-（合意/到達した内容を2〜4行で具体的に。合意せずなら有力候補と未決事項を整理）
+（合意/到達点を2〜3行で具体的に。合意せずなら有力候補と未決事項を1〜2行）
 
-## 🔑 議論で出たキーポイント
-- （重要論点1）
-- （重要論点2）
-- （重要論点3、必要なら4-5個まで）
+## 🔑 要点
+- （論点1）
+- （論点2）
+- （論点3）
 
-## 🚀 あなた（依頼者）が今やるべきこと
-1. （最優先の具体アクション）
-2. （次のアクション）
-3. （その次）
-
-## 🤔 さらに考えるべきこと
-- （深掘りすべき問い1）
-- （深掘りすべき問い2）
-
-## ⚠️ 注意点・盲点
-（議論で軽視された懸念や、依頼者が見落としそうなポイント。なければ「特になし」）
+## 🚀 次にやること
+（依頼者が今日明日に動ける、最重要の具体アクションを1つだけ）
 """
     try:
         resp = _safe_call_with_retry(
@@ -368,7 +363,10 @@ def _send_with_retry_events(chat, message: str) -> Iterator[tuple[str, object]]:
         except Exception as e:
             msg = str(e)
             if _is_transient_error(msg) and attempt < MAX_RETRY_ATTEMPTS:
-                delay = min(max(_parse_retry_delay(msg), 1.0), MAX_RETRY_WAIT_SEC)
+                base = _parse_retry_delay(msg)
+                if _is_unavailable_error(msg):
+                    base = base * (2 ** attempt)
+                delay = min(max(base, 1.0), MAX_RETRY_WAIT_SEC)
                 yield ("retry", {"wait_sec": delay, "attempt": attempt + 1})
                 time.sleep(delay)
                 continue
