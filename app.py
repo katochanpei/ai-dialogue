@@ -104,17 +104,23 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] { display: none !important; }
     [data-testid="collapsedControl"] { display: none !important; }
 
-    /* メイン中央寄せ 720px */
+    /* メイン中央寄せ：タイトルは広く、フォームは狭く */
     [data-testid="stMainBlockContainer"],
     .main .block-container {
-        max-width: 720px !important;
-        padding-top: 2.5rem !important;
+        max-width: 820px !important;
+        padding-top: 3rem !important;
     }
 
-    /* お題テキストエリア */
+    /* お題テキストエリアは少し内側に絞ってタイトルより狭く見せる */
+    div[data-testid="stTextArea"] {
+        max-width: 660px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
     [data-testid="stTextArea"] textarea {
         font-size: 1.05rem !important;
         line-height: 1.55 !important;
+        min-height: 160px !important;
     }
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder {
@@ -131,21 +137,21 @@ _SIDEBAR_CSS = """
         font-weight: 500 !important;
     }
 
-    /* === ボタン共通：ピル型 + Dela Gothic One === */
+    /* === ボタン共通：ピル型 + Dela Gothic One（デカく） === */
     div[data-testid="stButton"] button {
         border-radius: 999px !important;
-        padding: 18px 28px !important;
+        padding: 22px 44px !important;
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 22px !important;
+        font-size: 24px !important;
         font-weight: 400 !important;
-        letter-spacing: 0.01em !important;
+        letter-spacing: 0.02em !important;
         white-space: nowrap !important;
         line-height: 1.1 !important;
-        min-height: 64px !important;
+        min-height: 76px !important;
     }
     div[data-testid="stButton"] button p {
         font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 22px !important;
+        font-size: 24px !important;
         white-space: nowrap !important;
     }
 
@@ -457,18 +463,18 @@ def _list_past_logs() -> list[Path]:
 
 def _main_form() -> dict:
     """中央寄せの ChatGPT 風メインフォーム。お題が主役。"""
-    # === タイトル（🎙 + AI議論!） ===
+    # === 🌎 大陸 1: タイトル + デコ見出し ===
     st.markdown(
         """
-<div style="text-align: center; margin-bottom: 12px;">
-  <div style="font-size: 64px; line-height: 1;">🎙</div>
+<div style="text-align: center; padding-top: 24px; margin-bottom: 18px;">
+  <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
   <div class="ai-giron-title-main">AI議論!</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
-    # === デコラティブ見出し（iframe + SVG で Figma 完全再現） ===
+    # === デコラティブ見出し（タイトルより広く） ===
     components.html(
         """
 <!DOCTYPE html>
@@ -480,7 +486,7 @@ def _main_form() -> dict:
 </style>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 100"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 140"
      preserveAspectRatio="xMidYMid meet"
      style="width:100%; height:100%; display:block;">
   <defs>
@@ -489,37 +495,44 @@ def _main_form() -> dict:
       <stop offset="100%" stop-color="#0effb3"/>
     </linearGradient>
   </defs>
-  <line x1="8" y1="24" x2="38" y2="74"
-        stroke="url(#aiGironGrad)" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="712" y1="24" x2="682" y2="74"
-        stroke="url(#aiGironGrad)" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="360" y="74" text-anchor="middle"
+  <line x1="6" y1="36" x2="46" y2="104"
+        stroke="url(#aiGironGrad)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="814" y1="36" x2="774" y2="104"
+        stroke="url(#aiGironGrad)" stroke-width="3" stroke-linecap="round"/>
+  <text x="410" y="100" text-anchor="middle"
         font-family="'Dela Gothic One', sans-serif"
         fill="none"
-        stroke="url(#aiGironGrad)" stroke-width="1.5"
+        stroke="url(#aiGironGrad)" stroke-width="1.8"
         paint-order="stroke">
-    <tspan font-size="64.2">議論</tspan><tspan font-size="36.2">してもらいたい</tspan><tspan font-size="64.2">お題</tspan><tspan font-size="36.2">は？</tspan>
+    <tspan font-size="88">議論</tspan><tspan font-size="48">してもらいたい</tspan><tspan font-size="88">お題</tspan><tspan font-size="48">は？</tspan>
   </text>
 </svg>
 </body>
 </html>
 """,
-        height=110,
+        height=150,
     )
 
-    # === お題テキストエリア ===
+    # === 🌊 大河（大陸1→大陸2 の境界） ===
+    st.markdown('<div style="height: 56px;"></div>', unsafe_allow_html=True)
+
+    # === 🌎 大陸 2: フォーム本体 ===
+    # お題テキストエリア
     topic_input = st.text_area(
         "お題",
         value="",
         placeholder=DEFAULT_TOPIC,
-        height=130,
+        height=160,
         key="topic_input",
         label_visibility="collapsed",
         help="議論したいテーマを入力。空のままでもプレースホルダ例で開始できます。",
     )
     topic = topic_input.strip() or DEFAULT_TOPIC
 
-    # === キャラA / VS / キャラB（Figma準拠: 298 / 44 / 298） ===
+    # ─── お題 → キャラ間の余白 ───
+    st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+
+    # キャラA / VS / キャラB
     col_a, col_vs, col_b = st.columns([298, 80, 298])
     with col_a:
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
@@ -528,7 +541,10 @@ def _main_form() -> dict:
     with col_b:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
-    # === ボタン群（Figma準拠: 中央寄せ 285+285、左右マージン69） ===
+    # ─── キャラ → ボタン間の余白 ───
+    st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+
+    # ボタン群
     sp1, btn_col_main, btn_col_sub, sp2 = st.columns([69, 285, 285, 69])
     with btn_col_main:
         start = st.button(
@@ -546,7 +562,18 @@ def _main_form() -> dict:
             help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
         )
 
-    # === 折りたたみ系（控えめにページ下部に） ===
+    # === 🌊 大河（大陸2→大陸3 の境界） ===
+    st.markdown('<div style="height: 64px;"></div>', unsafe_allow_html=True)
+
+    # === 🌎 大陸 3: 折りたたみ系 ===
+    st.markdown(
+        """
+<style>
+  [data-testid="stExpander"] { margin-bottom: 14px !important; }
+</style>
+""",
+        unsafe_allow_html=True,
+    )
     with st.expander("⚙️ 詳細パラメータ", expanded=False):
         max_rounds = st.slider("最大往復", 1, 30, 20)
         interval = st.slider("ファシリテーター介入間隔", 1, 10, 3)
