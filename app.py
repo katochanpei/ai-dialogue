@@ -116,8 +116,8 @@ THREE_BG_HTML = """<!DOCTYPE html>
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  // 濃い fog で粒子が距離と共に静かに溶ける
-  scene.fog = new THREE.FogExp2(0x010102, 0.07);
+  // fog で粒子が距離と共に静かに溶ける（やや控えめにして粒子を見せる）
+  scene.fog = new THREE.FogExp2(0x010102, 0.05);
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 100);
   camera.position.z = 12;
 
@@ -141,9 +141,9 @@ THREE_BG_HTML = """<!DOCTYPE html>
   }
   const sprite = makeSprite();
 
-  // 密度を大幅減らす（控えめ）
+  // 控えめだが「ちゃんと見える」密度
   const isMobile = window.innerWidth < 768;
-  const N = isMobile ? 32 : 70;
+  const N = isMobile ? 56 : 120;
 
   const positions = new Float32Array(N*3);
   const colors = new Float32Array(N*3);
@@ -163,17 +163,17 @@ THREE_BG_HTML = """<!DOCTYPE html>
     positions[i*3+1] = (Math.random()-0.5)*22;
     positions[i*3+2] = (Math.random()-0.5)*16;
     velocities.push({
-      x:(Math.random()-0.5)*0.003,
-      y:(Math.random()-0.5)*0.003,
-      z:(Math.random()-0.5)*0.003
+      x:(Math.random()-0.5)*0.0045,
+      y:(Math.random()-0.5)*0.0045,
+      z:(Math.random()-0.5)*0.0045
     });
     const c = palette[Math.floor(Math.random()*palette.length)];
-    // 明度をやや落とす（×0.7）で「目立たない」を担保
-    colors[i*3]   = c.r * 0.7;
-    colors[i*3+1] = c.g * 0.7;
-    colors[i*3+2] = c.b * 0.7;
-    // 5% を中サイズハブ、残りは細かい粒
-    sizes[i] = Math.random() < 0.05 ? (1.6 + Math.random()*0.6) : (0.35 + Math.random()*0.35);
+    // 明度はほぼフル（×0.92）で「ちゃんと見える」を担保しつつ単色寄せ
+    colors[i*3]   = c.r * 0.92;
+    colors[i*3+1] = c.g * 0.92;
+    colors[i*3+2] = c.b * 0.92;
+    // 8% を中サイズハブ、残りは細かい粒
+    sizes[i] = Math.random() < 0.08 ? (2.0 + Math.random()*0.8) : (0.5 + Math.random()*0.45);
   }
 
   const geom = new THREE.BufferGeometry();
@@ -233,16 +233,16 @@ THREE_BG_HTML = """<!DOCTYPE html>
       if (pos[i*3+2] >  bound || pos[i*3+2] < -bound) velocities[i].z *= -1;
     }
     geom.attributes.position.needsUpdate = true;
-    // ほぼ気づかないほどの回転
-    points.rotation.y += 0.00015;
-    points.rotation.x += 0.00008;
-    // パララックスは穏やかに
-    tx += (mouseX * 0.35 - tx) * 0.02;
-    ty += (mouseY * 0.35 - ty) * 0.02;
+    // 静かだが視認できる回転
+    points.rotation.y += 0.00035;
+    points.rotation.x += 0.00018;
+    // パララックスは控えめだが反応はする
+    tx += (mouseX * 0.55 - tx) * 0.022;
+    ty += (mouseY * 0.55 - ty) * 0.022;
     camera.position.x = tx;
     camera.position.y = ty;
-    // Z ドリフトもごく小さく
-    camera.position.z = 12 + Math.sin(frame * 0.0015) * 0.25;
+    // Z ドリフトは奥行きを感じる程度に
+    camera.position.z = 12 + Math.sin(frame * 0.002) * 0.45;
     camera.lookAt(scene.position);
     renderer.render(scene, camera);
   }
@@ -553,10 +553,10 @@ _SIDEBAR_CSS = """
 
     /* === チャット吹き出し：ガラス／フロスト効果（背景の Three.js 粒子を透過させる） === */
     [data-testid="stChatMessage"] {
-        background: rgba(15, 16, 17, 0.55) !important;
-        backdrop-filter: blur(18px) saturate(140%) !important;
-        -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        background: rgba(15, 16, 17, 0.42) !important;
+        backdrop-filter: blur(14px) saturate(140%) !important;
+        -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
         border-radius: 14px !important;
         padding: 16px 20px !important;
         margin-bottom: 12px !important;

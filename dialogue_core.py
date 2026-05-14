@@ -31,6 +31,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from personas import THINKING_PHRASES
+
 
 # キャラ発言前のローディング表示用フレーズ（ランダム選択）
 THINKING_MESSAGES = [
@@ -65,7 +67,16 @@ SUMMARIZER_THINKING_MESSAGES = [
 ]
 
 
-def _pick_thinking() -> str:
+def _pick_thinking(persona: dict | None = None) -> str:
+    """ローディング文言を抽選。persona が渡された場合はキャラ固有プールから優先。
+
+    キャラ固有プール（personas.THINKING_PHRASES）が空ならば、汎用プールにフォールバック。
+    """
+    if persona is not None:
+        key = persona.get("key", "")
+        pool = THINKING_PHRASES.get(key) or []
+        if pool:
+            return random.choice(pool)
     return random.choice(THINKING_MESSAGES)
 
 
@@ -316,8 +327,8 @@ def _call_summarizer(
     """議論を要約し、依頼者向けの実用ブリーフィングを生成する。"""
     history = "\n".join(transcript)
     state = "両者が合意した" if agreed else "合意に至らなかった（上限到達）"
-    prompt = f"""あなたは2人のAIの雑談を盗み聞きしていた人です。
-依頼者に「で、結局どんな感じだった？」と聞かれたつもりで、ラフに伝えてください。
+    prompt = f"""あなたは議論の要約役 兼 アドバイザーです。
+以下の議論を読んで、依頼者向けの実用ブリーフィングを作成してください。
 
 【お題】
 {topic}
@@ -325,20 +336,35 @@ def _call_summarizer(
 【状態】
 {state}
 
-【会話の全文】
+【議論の全文】
 {history}
 
 【出力ルール】
-- 見出し・箇条書き・Markdown構造は使わない
-- 自然な話し言葉、3〜4行、合計100〜180字
-- 「結局〜」「やるなら〜」「気をつけるなら〜」みたいなトーン
-- 仕事の結論っぽく整理しない。雑談を盗み聞きした人の感想として伝える
-- 絵文字・装飾は最小限
+- 下記のMarkdown構造のみで出力（見出し・絵文字はそのまま）
+- 「結論」は2〜3行で具体的に（誰向け・何ができる・どう価値）
+- 「キーポイント」は3〜4つ、各1行
+- 「次にやること」は具体アクションを1〜2つ
+- 「さらに考えるべきこと」は深掘り問いを1〜2つ
+- 「注意点・盲点」は1〜2行（なければ「特になし」）
+- 全体400〜550字。冗長な前置きや言い換えは省き、要点だけ
 
-例（あくまで参考、そのまま使わない）：
-> 結局「20代の女性に刺さりそう」って2人とも言ってた。
-> 危ないのは収益モデルが読めへんとこ。
-> やるなら早めの方が良さそう。
+## 🎯 結論
+（合意/到達点を2〜3行で具体的に。合意せずなら有力候補と未決事項を1〜2行）
+
+## 🔑 キーポイント
+- （重要論点1）
+- （重要論点2）
+- （重要論点3）
+
+## 🚀 次にやること
+1. （最優先の具体アクション）
+2. （次のアクション、必要なら）
+
+## 🤔 さらに考えるべきこと
+- （深掘り問い）
+
+## ⚠️ 注意点・盲点
+（議論で軽視された懸念や見落としポイント。なければ「特になし」）
 """
     try:
         resp = _safe_call_with_retry(
@@ -424,7 +450,7 @@ def dialogue_events(
             "type": "thinking",
             "role": persona_a["name"],
             "emoji": persona_a["emoji"],
-            "message": _pick_thinking(),
+            "message": _pick_thinking(persona_a),
             "for_event": "turn_a",
         }
         last_a = None
@@ -459,7 +485,7 @@ def dialogue_events(
             "type": "thinking",
             "role": persona_b["name"],
             "emoji": persona_b["emoji"],
-            "message": _pick_thinking(),
+            "message": _pick_thinking(persona_b),
             "for_event": "turn_b",
         }
         last_b = None
