@@ -108,6 +108,10 @@ _SIDEBAR_CSS = """
     .main .block-container {
         max-width: 820px !important;
         padding-top: 3rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
     /* お題テキストエリアは少し内側に絞ってタイトルより狭く見せる */
@@ -347,7 +351,8 @@ def _check_password() -> bool:
     # 中央のカード型ログインフォーム
     st.markdown(
         """
-<div style="text-align: center; margin-bottom: 32px;">
+<div style="display:flex; flex-direction:column; align-items:center;
+            margin-bottom: 32px;">
   <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
   <div class="ai-giron-title-login">AI議論!</div>
   <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 0 0;">
@@ -494,7 +499,8 @@ def _main_form() -> dict:
     # === 🌎 大陸 1: タイトル + デコ見出し ===
     st.markdown(
         """
-<div style="text-align: center; padding-top: 24px; margin-bottom: 18px;">
+<div style="display:flex; flex-direction:column; align-items:center;
+            padding-top: 24px; margin-bottom: 18px;">
   <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
   <div class="ai-giron-title-main">AI議論!</div>
 </div>
