@@ -5,6 +5,7 @@ Run:
 """
 from __future__ import annotations
 
+import html
 import os
 import random
 from pathlib import Path
@@ -416,10 +417,33 @@ def _randomize_cfg(cfg: dict) -> dict:
 
 def _run_dialogue(cfg: dict) -> None:
     st.session_state.running = True
-    st.subheader("お題")
-    st.info(cfg["topic"])
+
+    # === お題（最も目立つ大きなパネル） ===
+    st.markdown(
+        f"""
+<div style="
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    padding: 26px 32px;
+    border-radius: 14px;
+    margin: 14px 0 22px 0;
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+">
+  <div style="color: #bfdbfe; font-size: 0.78rem; font-weight: 700;
+              letter-spacing: 0.18em; margin-bottom: 12px; text-transform: uppercase;">
+    📋 お 題
+  </div>
+  <div style="color: #ffffff; font-size: 1.45rem; font-weight: 600;
+              line-height: 1.55;">
+    {html.escape(cfg["topic"])}
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    # === 議論ヘッダ（お題より控えめ） ===
     st.subheader(
-        f"対決: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
+        f"💬 議論: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
     )
     st.caption(
         f"⚙️ 最大 {cfg['max_rounds']} 往復 / "
