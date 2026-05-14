@@ -11,6 +11,7 @@ import random
 from pathlib import Path
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 RANDOM_TOPICS = [
@@ -95,10 +96,182 @@ if "aurora_palette" not in st.session_state:
 _AURORA = st.session_state["aurora_palette"]
 
 
+# === Three.js 背景：パーティクル・ネットワーク（AI / ニューラルネット風） ===
+# ダークブルー基調に、シアン・バイオレット・ブルーの粒子が漂い、近接するもの同士を
+# 細い線で接続するクラシックな AI アニメーション。iframe で隔離して動かす。
+THREE_BG_HTML = """<!DOCTYPE html>
+<html><head>
+<style>
+  html, body { margin:0; padding:0; height:100%; background:transparent; overflow:hidden; }
+  canvas { display:block; }
+</style>
+</head><body>
+<canvas id="bg"></canvas>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('bg');
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0a0e1a, 0.045);
+  const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.z = 9;
+
+  const N = 130;
+  const geom = new THREE.BufferGeometry();
+  const positions = new Float32Array(N*3);
+  const colors = new Float32Array(N*3);
+  const velocities = [];
+  const palette = [
+    new THREE.Color(0x60a5fa),
+    new THREE.Color(0xa78bfa),
+    new THREE.Color(0x22d3ee),
+    new THREE.Color(0x818cf8),
+    new THREE.Color(0xc4b5fd)
+  ];
+  for (let i=0; i<N; i++){
+    positions[i*3]   = (Math.random()-0.5)*16;
+    positions[i*3+1] = (Math.random()-0.5)*16;
+    positions[i*3+2] = (Math.random()-0.5)*16;
+    velocities.push({
+      x:(Math.random()-0.5)*0.010,
+      y:(Math.random()-0.5)*0.010,
+      z:(Math.random()-0.5)*0.010
+    });
+    const c = palette[i % palette.length];
+    colors[i*3]=c.r; colors[i*3+1]=c.g; colors[i*3+2]=c.b;
+  }
+  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size: 0.085, vertexColors: true,
+    transparent: true, opacity: 0.9,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const points = new THREE.Points(geom, mat);
+  scene.add(points);
+
+  const linesGeom = new THREE.BufferGeometry();
+  const linesMat = new THREE.LineBasicMaterial({
+    color: 0x6ea1ff, transparent: true, opacity: 0.22,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const lines = new THREE.LineSegments(linesGeom, linesMat);
+  scene.add(lines);
+
+  function updateLines(){
+    const pos = geom.attributes.position.array;
+    const buf = [];
+    const maxD = 1.9, maxD2 = maxD*maxD;
+    for (let i=0; i<N; i++){
+      for (let j=i+1; j<N; j++){
+        const dx = pos[i*3]-pos[j*3];
+        const dy = pos[i*3+1]-pos[j*3+1];
+        const dz = pos[i*3+2]-pos[j*3+2];
+        const d2 = dx*dx+dy*dy+dz*dz;
+        if (d2 < maxD2){
+          buf.push(pos[i*3], pos[i*3+1], pos[i*3+2]);
+          buf.push(pos[j*3], pos[j*3+1], pos[j*3+2]);
+        }
+      }
+    }
+    linesGeom.setAttribute('position', new THREE.Float32BufferAttribute(buf, 3));
+  }
+
+  let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+  window.addEventListener('pointermove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  let frame = 0;
+  function tick(){
+    requestAnimationFrame(tick);
+    frame++;
+    const pos = geom.attributes.position.array;
+    for (let i=0; i<N; i++){
+      pos[i*3]   += velocities[i].x;
+      pos[i*3+1] += velocities[i].y;
+      pos[i*3+2] += velocities[i].z;
+      if (Math.abs(pos[i*3])>8) velocities[i].x *= -1;
+      if (Math.abs(pos[i*3+1])>8) velocities[i].y *= -1;
+      if (Math.abs(pos[i*3+2])>8) velocities[i].z *= -1;
+    }
+    geom.attributes.position.needsUpdate = true;
+    if (frame % 3 === 0) updateLines();
+    points.rotation.y += 0.0009;
+    points.rotation.x += 0.0004;
+    lines.rotation.y = points.rotation.y;
+    lines.rotation.x = points.rotation.x;
+    targetX += (mouseX * 0.6 - targetX) * 0.03;
+    targetY += (mouseY * 0.6 - targetY) * 0.03;
+    camera.position.x = targetX;
+    camera.position.y = targetY;
+    camera.lookAt(scene.position);
+    renderer.render(scene, camera);
+  }
+  tick();
+
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body></html>"""
+
+
+def _inject_three_bg() -> None:
+    """Three.js 製のパーティクル背景を非表示の iframe で描画。
+
+    iframe は CSS で position:fixed フル画面・z-index:-1・pointer-events:none に配置され、
+    UI 要素のクリックを邪魔せず純粋な背景として機能する。
+    """
+    components.html(THREE_BG_HTML, height=0, scrolling=False)
+
+
 # === Main UI styling: Figma準拠の派手アーケード調 ===
 _SIDEBAR_CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
+    /* ===== Three.js 背景 iframe を全画面固定の背景レイヤーとして配置 =====
+       高さ 0 で生成したカスタムコンポーネントの iframe を viewport いっぱいに
+       広げ、z-index:-1 で UI の下、pointer-events:none でクリック透過にする。 */
+    [data-testid="stCustomComponentV1"],
+    iframe[title*="streamlit_iframe"],
+    iframe[title*="streamlit.components.v1.html"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: -1 !important;
+        pointer-events: none !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+    [data-testid="stCustomComponentV1"] iframe {
+        width: 100vw !important;
+        height: 100vh !important;
+        border: 0 !important;
+        background: transparent !important;
+        pointer-events: none !important;
+    }
+    /* メイン領域は背景を透過させてThree.jsレイヤーが見えるように */
+    [data-testid="stMain"],
+    [data-testid="stAppViewContainer"],
+    [data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    /* base のダークなステージ色（Three.js キャンバスの下に来る） */
+    [data-testid="stApp"], html, body {
+        background-color: #0a0e1a !important;
+    }
+
     /* サイドバー非表示 + メインを左右真ん中に */
     section[data-testid="stSidebar"] { display: none !important; }
     [data-testid="collapsedControl"] { display: none !important; }
@@ -392,6 +565,9 @@ _aurora_css = _SIDEBAR_CSS
 for _k, _v in _AURORA.items():
     _aurora_css = _aurora_css.replace(f"__AURORA_{_k}__", _v)
 st.markdown(_aurora_css, unsafe_allow_html=True)
+
+# Three.js パーティクル背景（ログイン画面・メイン画面のいずれでも表示される）
+_inject_three_bg()
 
 
 HELP_MARKDOWN = """
