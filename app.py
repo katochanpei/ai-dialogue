@@ -107,7 +107,7 @@ THREE_BG_HTML = """<!DOCTYPE html>
 </style>
 </head><body>
 <canvas id="bg"></canvas>
-<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (function(){
   const canvas = document.getElementById('bg');
@@ -231,45 +231,65 @@ def _inject_three_bg() -> None:
     iframe は CSS で position:fixed フル画面・z-index:-1・pointer-events:none に配置され、
     UI 要素のクリックを邪魔せず純粋な背景として機能する。
     """
-    components.html(THREE_BG_HTML, height=0, scrolling=False)
+    components.html(THREE_BG_HTML, height=10, scrolling=False)
 
 
 # === Main UI styling: Figma準拠の派手アーケード調 ===
 _SIDEBAR_CSS = """
 <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
-    /* ===== Three.js 背景 iframe を全画面固定の背景レイヤーとして配置 =====
-       高さ 0 で生成したカスタムコンポーネントの iframe を viewport いっぱいに
-       広げ、z-index:-1 で UI の下、pointer-events:none でクリック透過にする。 */
+    /* ===== Three.js 背景レイヤー：完全フル画面の固定 iframe =====
+       Streamlit の wrapper div / iframe を viewport いっぱいに広げ、z-index:0 で
+       UI コンテンツ（z-index:10 以上）の下に敷く。pointer-events:none で透過。 */
+    html, body {
+        background-color: #0a0e1a !important;
+    }
+    /* Streamlit の全レベルの wrapper を透明化して body の色 + iframe が見えるように */
+    [data-testid="stApp"],
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"],
+    [data-testid="stHeader"],
+    .main {
+        background: transparent !important;
+    }
+    /* iframe ラッパー（複数バージョンに対応するため広めにセレクタ） */
     [data-testid="stCustomComponentV1"],
-    iframe[title*="streamlit_iframe"],
-    iframe[title*="streamlit.components.v1.html"] {
+    [data-testid="stIFrame"],
+    div[data-testid^="stCustom"],
+    .stCustomComponentV1 {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        z-index: -1 !important;
+        max-width: none !important;
+        max-height: none !important;
+        z-index: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
         pointer-events: none !important;
-        border: 0 !important;
-        background: transparent !important;
     }
-    [data-testid="stCustomComponentV1"] iframe {
+    /* iframe 自体も同じく */
+    [data-testid="stCustomComponentV1"] iframe,
+    [data-testid="stIFrame"] iframe,
+    iframe[title*="streamlit"],
+    iframe[srcdoc*="THREE"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
         border: 0 !important;
         background: transparent !important;
         pointer-events: none !important;
+        z-index: 0 !important;
     }
-    /* メイン領域は背景を透過させてThree.jsレイヤーが見えるように */
-    [data-testid="stMain"],
-    [data-testid="stAppViewContainer"],
-    [data-testid="stHeader"] {
-        background: transparent !important;
-    }
-    /* base のダークなステージ色（Three.js キャンバスの下に来る） */
-    [data-testid="stApp"], html, body {
-        background-color: #0a0e1a !important;
+    /* UI コンテンツは iframe より上に。stMainBlockContainer に positive z-index を */
+    [data-testid="stMainBlockContainer"],
+    .main .block-container {
+        position: relative !important;
+        z-index: 10 !important;
     }
 
     /* サイドバー非表示 + メインを左右真ん中に */
@@ -865,15 +885,6 @@ def _main_form() -> dict:
             use_container_width=True,
             disabled=st.session_state.running,
         )
-        st.markdown('<div class="btn-gap"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="random-btn-wrap"></div>', unsafe_allow_html=True)
-        random_start = st.button(
-            "ランダム議論！",
-            type="secondary",
-            use_container_width=True,
-            disabled=st.session_state.running,
-            help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
-        )
 
     # === セクション間スペース（フォーム → 折りたたみ） ===
     st.markdown('<div style="height: 64px;"></div>', unsafe_allow_html=True)
@@ -919,7 +930,6 @@ def _main_form() -> dict:
         "interval": interval,
         "delay": delay,
         "start": start,
-        "random_start": random_start,
     }
 
 
@@ -1153,7 +1163,7 @@ def main() -> None:
     with form_slot.container():
         cfg = _main_form()
 
-    if cfg["start"] or cfg["random_start"]:
+    if cfg["start"]:
         # フォームを消して画面を議論専用に切り替える
         form_slot.empty()
 
@@ -1162,10 +1172,6 @@ def main() -> None:
             '<a href="?back=1" class="back-top-link">← やっぱり戻る</a>',
             unsafe_allow_html=True,
         )
-
-        if cfg["random_start"]:
-            cfg = _randomize_cfg(cfg)
-            st.info("🎲 ランダムモード: お題・キャラ・パラメータを抽選しました。")
 
         cfg = _resolve_random_personas(cfg)
 
