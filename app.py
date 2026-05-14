@@ -95,27 +95,26 @@ if "aurora_palette" not in st.session_state:
 _AURORA = st.session_state["aurora_palette"]
 
 
-# === Main UI styling: サイドバー非表示、中央寄せフォーム ===
+# === Main UI styling: Figma準拠の派手アーケード調 ===
 _SIDEBAR_CSS = """
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
-    /* サイドバー全部非表示（主役は中央のお題入力） */
+    /* サイドバー非表示 */
     section[data-testid="stSidebar"] { display: none !important; }
     [data-testid="collapsedControl"] { display: none !important; }
 
-    /* メインを中央 720px に絞ってフォーム的に */
+    /* メイン中央寄せ 720px */
     [data-testid="stMainBlockContainer"],
     .main .block-container {
         max-width: 720px !important;
         padding-top: 2.5rem !important;
     }
 
-    /* お題テキストエリアを大きく目立たせる */
+    /* お題テキストエリア */
     [data-testid="stTextArea"] textarea {
         font-size: 1.05rem !important;
         line-height: 1.55 !important;
     }
-
-    /* プレースホルダの色（控えめグレー） */
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder {
         color: rgba(255, 255, 255, 0.30) !important;
@@ -123,7 +122,42 @@ _SIDEBAR_CSS = """
         -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
 
-    /* 「ランダム議論」ボタン：オーロラ風（パステル × うねうね） */
+    /* セレクトボックスのラベル：控えめに */
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stSelectbox"] label p {
+        font-size: 11px !important;
+        color: rgba(255, 255, 255, 0.5) !important;
+        font-weight: 500 !important;
+    }
+
+    /* === ボタン共通：ピル型 + Dela Gothic One === */
+    div[data-testid="stButton"] button {
+        border-radius: 999px !important;
+        padding: 14px 28px !important;
+        font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.02em !important;
+    }
+    div[data-testid="stButton"] button p {
+        font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
+    }
+
+    /* プライマリボタン：マゼンタ→ミントの派手グラデ */
+    div[data-testid="stButton"] button[kind="primary"] {
+        background: linear-gradient(90deg, #cf22ff 0%, #0effb3 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 0 18px rgba(207, 34, 255, 0.35) !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35) !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"]:hover {
+        box-shadow: 0 0 28px rgba(207, 34, 255, 0.6),
+                    0 0 18px rgba(14, 255, 179, 0.4) !important;
+        transform: translateY(-1px) scale(1.02) !important;
+    }
+
+    /* === セカンダリボタン（ランダム議論）：オーロラ === */
     @keyframes auroraDrift {
         0%   { background-position:   0%   0%; }
         25%  { background-position: 100%   0%; }
@@ -156,7 +190,6 @@ _SIDEBAR_CSS = """
             auroraGlow 2.7s ease-in-out infinite !important;
         color: #2d1b4e !important;
         border: 2px solid rgba(255, 255, 255, 0.6) !important;
-        font-weight: 800 !important;
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6) !important;
         transition: transform 0.2s ease !important;
     }
@@ -165,6 +198,55 @@ _SIDEBAR_CSS = """
             auroraDrift 3s ease-in-out infinite,
             auroraGlow 1.3s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
+    }
+
+    /* === エクスパンダー：コンパクト === */
+    [data-testid="stExpander"] details > summary {
+        padding-top: 7px !important;
+        padding-bottom: 7px !important;
+        font-size: 11px !important;
+    }
+    [data-testid="stExpander"] details > summary p {
+        font-size: 11px !important;
+    }
+
+    /* === デコラティブヘッディング用クラス === */
+    .ai-giron-decohead {
+        font-family: 'Dela Gothic One', sans-serif !important;
+        text-align: center;
+        line-height: 1.05;
+        margin: 8px 0 18px 0;
+        color: transparent;
+        -webkit-text-stroke: 1.5px #cf22ff;
+        text-stroke: 1.5px #cf22ff;
+        text-shadow:
+            0 0 12px rgba(207, 34, 255, 0.5),
+            0 0 24px rgba(207, 34, 255, 0.25);
+    }
+    .ai-giron-decohead .big { font-size: 56px; }
+    .ai-giron-decohead .small { font-size: 32px; }
+    .ai-giron-decohead .slash {
+        color: transparent;
+        -webkit-text-stroke: 2px #0effb3;
+        text-shadow: 0 0 10px rgba(14, 255, 179, 0.5);
+        font-size: 48px;
+        display: inline-block;
+        margin: 0 18px;
+    }
+    .ai-giron-title-main {
+        font-family: 'Dela Gothic One', sans-serif !important;
+        font-size: 38px !important;
+        color: white !important;
+        text-align: center;
+        margin: 14px 0 4px 0 !important;
+        line-height: 1.1;
+    }
+    .ai-giron-vs {
+        font-family: 'Dela Gothic One', sans-serif !important;
+        font-size: 24px;
+        color: white;
+        text-align: center;
+        padding-top: 28px;
     }
 </style>
 """
@@ -298,7 +380,7 @@ def _persona_selector(side: str, default_key: str) -> dict:
     keys = list(PERSONAS.keys())
     idx = keys.index(default_key) if default_key in keys else 0
     selected_key = st.selectbox(
-        f"キャラ{side}",
+        "議論する人格を選択",
         keys,
         index=idx,
         format_func=lambda k: PERSONAS[k]["label"],
@@ -392,21 +474,28 @@ def _list_past_logs() -> list[Path]:
 
 def _main_form() -> dict:
     """中央寄せの ChatGPT 風メインフォーム。お題が主役。"""
-    # === タイトル（控えめ） ===
+    # === タイトル（🎙 + AI議論!） ===
     st.markdown(
         """
-<div style="text-align: center; margin-bottom: 28px;">
-  <div style="font-size: 2rem; line-height: 1;">🎙</div>
-  <h1 style="margin: 8px 0 4px 0; font-size: 1.4rem; font-weight: 700;">AI議論</h1>
-  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 0;">
-    Gemini同士が自律的に議論して結論を出すツール
-  </p>
+<div style="text-align: center; margin-bottom: 12px;">
+  <div style="font-size: 64px; line-height: 1;">🎙</div>
+  <div class="ai-giron-title-main">AI議論!</div>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
-    # === お題（主役、大きく） ===
+    # === デコラティブ見出し ===
+    st.markdown(
+        """
+<div class="ai-giron-decohead">
+  <span class="slash">＼</span><span class="big">議論</span><span class="small">してもらいたい</span><span class="big">お題</span><span class="small">は？</span><span class="slash">／</span>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+    # === お題テキストエリア ===
     topic_input = st.text_area(
         "お題",
         value="",
@@ -418,10 +507,12 @@ def _main_form() -> dict:
     )
     topic = topic_input.strip() or DEFAULT_TOPIC
 
-    # === キャラA / B 横並び ===
-    col_a, col_b = st.columns(2)
+    # === キャラA / VS / キャラB（3カラム） ===
+    col_a, col_vs, col_b = st.columns([10, 1, 10])
     with col_a:
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
+    with col_vs:
+        st.markdown('<div class="ai-giron-vs">VS</div>', unsafe_allow_html=True)
     with col_b:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
@@ -429,7 +520,7 @@ def _main_form() -> dict:
     btn_col_main, btn_col_sub = st.columns([2, 1])
     with btn_col_main:
         start = st.button(
-            "▶️ 議論スタート",
+            "▶️ 議論スタート！",
             type="primary",
             use_container_width=True,
             disabled=st.session_state.running,
