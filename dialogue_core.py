@@ -27,7 +27,7 @@ from google.genai import types
 
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
-MODEL = "gemini-2.0-flash"
+MODEL = "gemini-2.5-flash-lite"
 
 
 def _get_api_key() -> str | None:
