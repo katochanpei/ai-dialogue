@@ -245,6 +245,7 @@ _SIDEBAR_CSS = """
         text-align: center;
         margin: 14px 0 4px 0 !important;
         line-height: 1.1;
+        white-space: nowrap !important;
     }
     .ai-giron-title-login {
         font-family: 'Dela Gothic One', sans-serif !important;
@@ -253,6 +254,7 @@ _SIDEBAR_CSS = """
         text-align: center;
         margin: 18px 0 8px 0 !important;
         line-height: 1.1;
+        white-space: nowrap !important;
     }
     .ai-giron-vs {
         font-family: 'Dela Gothic One', sans-serif !important;
