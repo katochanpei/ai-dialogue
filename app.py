@@ -292,13 +292,17 @@ def _sidebar() -> dict:
         st.caption("Gemini × Gemini 自律対話")
 
         st.subheader("お題")
-        topic = st.text_area(
+        topic_input = st.text_area(
             "お題",
-            value=DEFAULT_TOPIC,
+            value="",
+            placeholder=DEFAULT_TOPIC,
             label_visibility="collapsed",
             height=110,
             key="topic_input",
+            help="空のまま「議論スタート」を押すと、表示中のお題例で開始します",
         )
+        # 入力が空ならプレースホルダの内容で議論を開始
+        topic = topic_input.strip() or DEFAULT_TOPIC
 
         st.subheader("キャラ設定")
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
