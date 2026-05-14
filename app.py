@@ -72,26 +72,26 @@ from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS  # noqa:
 st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
-def _generate_prism_colors() -> str:
-    """ランダムな2色のプリズム配色を生成。
+def _generate_aurora_palette() -> dict[str, str]:
+    """オーロラ風の4色パレットを生成（各色は半透明）。
 
-    色相環からほどよく離れた2色をランダムに選ぶ。
-    アニメーション用に最後に開始色を繰り返してループを滑らかにする。
+    色相環からおおむね 90 度ずつ離れた 4 色をランダムに選ぶ。
     """
-    hue1 = random.randint(0, 360)
-    # 60〜180度離れた色相を相方に（近すぎず・遠すぎず）
-    hue2 = (hue1 + random.randint(60, 180)) % 360
-    sat = random.randint(82, 95)
-    light = random.randint(60, 68)
-    c1 = f"hsl({hue1},{sat}%,{light}%)"
-    c2 = f"hsl({hue2},{sat}%,{light}%)"
-    return f"{c1}, {c2}, {c1}"
+    hue_start = random.randint(0, 360)
+    palette: dict[str, str] = {}
+    for i in range(4):
+        hue = (hue_start + i * 90 + random.randint(-15, 15)) % 360
+        sat = random.randint(72, 92)
+        light = random.randint(52, 64)
+        alpha = round(random.uniform(0.85, 1.0), 2)
+        palette[f"C{i + 1}"] = f"hsla({hue},{sat}%,{light}%,{alpha})"
+    return palette
 
 
-# セッション中は色を固定（ボタンが安定して見える）。新しいセッションで色変わる。
-if "prism_colors" not in st.session_state:
-    st.session_state["prism_colors"] = _generate_prism_colors()
-_PRISM = st.session_state["prism_colors"]
+# セッション中は色を固定。新しいセッションで色変わる。
+if "aurora_palette" not in st.session_state:
+    st.session_state["aurora_palette"] = _generate_aurora_palette()
+_AURORA = st.session_state["aurora_palette"]
 
 
 # === Sidebar styling: 幅を広げ、フォントを小さく ===
@@ -122,52 +122,57 @@ _SIDEBAR_CSS = """
         opacity: 1 !important;
         -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
-    /* 「ランダム議論」ボタン：元のプリズム配色をゆっくり流す */
-    @keyframes prismSweep {
-        0%   { background-position:   0% 50%; }
-        100% { background-position: 200% 50%; }
+    /* 「ランダム議論」ボタン：オーロラ風（4つのラジアルグラデが液体的に動く） */
+    @keyframes auroraDrift {
+        0%   { background-position:   0%   0%; }
+        25%  { background-position: 100%   0%; }
+        50%  { background-position: 100% 100%; }
+        75%  { background-position:   0% 100%; }
+        100% { background-position:   0%   0%; }
     }
-    @keyframes prismHaloPulse {
+    @keyframes auroraGlow {
         0%, 100% {
             box-shadow:
                 0 0 14px rgba(255, 255, 255, 0.22),
-                inset 0 0 14px rgba(255, 255, 255, 0.10);
+                inset 0 0 14px rgba(255, 255, 255, 0.08);
         }
         50% {
             box-shadow:
-                0 0 30px rgba(255, 255, 255, 0.50),
-                inset 0 0 24px rgba(255, 255, 255, 0.20);
+                0 0 30px rgba(255, 255, 255, 0.45),
+                inset 0 0 22px rgba(255, 255, 255, 0.18);
         }
     }
-    /* セレクタを深くして Streamlit の内部スタイルより確実に勝つ */
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[kind="secondary"] {
-        background-color: transparent !important;
-        background-image: linear-gradient(
-            90deg,
-            __PRISM_COLORS__,
-            __PRISM_COLORS__
-        ) !important;
-        background-size: 200% 100% !important;
+        background-color: #1a1a2e !important;
+        background-image:
+            radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
+            radial-gradient(at 80% 25%, __AURORA_C2__ 0%, transparent 55%),
+            radial-gradient(at 75% 80%, __AURORA_C3__ 0%, transparent 55%),
+            radial-gradient(at 25% 80%, __AURORA_C4__ 0%, transparent 55%) !important;
+        background-size: 200% 200% !important;
         animation:
-            prismSweep 4.5s linear infinite,
-            prismHaloPulse 3.6s ease-in-out infinite !important;
+            auroraDrift 9s ease-in-out infinite,
+            auroraGlow 4s ease-in-out infinite !important;
         color: #ffffff !important;
-        border: 2px solid rgba(255, 255, 255, 0.40) !important;
+        border: 2px solid rgba(255, 255, 255, 0.35) !important;
         font-weight: 800 !important;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.50) !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55) !important;
         transition: transform 0.2s ease !important;
     }
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
         animation:
-            prismSweep 2.2s linear infinite,
-            prismHaloPulse 1.8s ease-in-out infinite !important;
+            auroraDrift 4.5s ease-in-out infinite,
+            auroraGlow 2s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 </style>
 """
-st.markdown(_SIDEBAR_CSS.replace("__PRISM_COLORS__", _PRISM), unsafe_allow_html=True)
+_aurora_css = _SIDEBAR_CSS
+for _k, _v in _AURORA.items():
+    _aurora_css = _aurora_css.replace(f"__AURORA_{_k}__", _v)
+st.markdown(_aurora_css, unsafe_allow_html=True)
 
 
 def _render_warning_banner() -> None:
