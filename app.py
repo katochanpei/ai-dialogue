@@ -185,61 +185,49 @@ def _render_warning_banner() -> None:
 
 
 HELP_MARKDOWN = """
-### 🤔 何ができるか
-- お題を与えると、**2人のAIキャラが議論して合意**に至る
-- 3往復ごとに**ファシリテーターAI**が論点を整理して介入
-- 終わったら**要約と次のアクション**を提案してくれる
+<div style="font-size: 0.86rem; color: rgba(255,255,255,0.65); line-height: 1.7;">
 
-### ⚙️ どうやって動いているか（噛み砕いて）
+**🎯 何ができるか**
 
-```
-あなたのブラウザ ─► Streamlit Cloud ─► Google Gemini API
-                                            │
-                                            ▼
-                                    4人のGeminiが連携
-                                    ├ キャラA（提案役）
-                                    ├ キャラB（反論役）
-                                    ├ ファシリテーター
-                                    └ 要約役（結論まとめ）
-```
+お題を与えると、2人のAIキャラが自律的に議論して合意に至ります。3往復ごとにファシリテーターAIが論点を整理し、議論終了後は要約と次のアクションを提案します。
 
-1. **Gemini = Googleが作った大規模言語モデル**（ChatGPTのGoogle版にあたるもの）
-2. **API経由で呼び出す**: 毎回ネット越しに Google のサーバに「これを考えて」と投げる
-3. **役割演技**: 同じGeminiでも違う性格設定（システムプロンプトと呼ぶ）を与えると、別人格として振る舞う
-4. **会話の流れ**: あなたのお題 → キャラA発言 → キャラB発言 → 判定AIが合意チェック → 合意なら要約、まだなら次のラウンドへ
+**⚙️ 動作の仕組み**
 
-### 📤 何が送信されるか
-- ✅ お題、キャラ設定、議論の内容すべて
-- ⚠️ これらは**Googleのサーバに保存される可能性があります**
-- ⚠️ 無料プラン使用時、Googleが**モデル改善に使用する場合があります**
+ブラウザ → Streamlit Cloud → Google Gemini API、という流れで動作します。
+キャラA（提案役）／キャラB（反論役）／ファシリテーター／要約役 の4人のGeminiが連携。
+同じGeminiでも違う性格設定（システムプロンプト）を与えると、別人格として振る舞います。
 
-**入力してはいけないもの:**
-- ❌ 社外秘・社内秘情報
-- ❌ 個人情報・顧客データ
-- ❌ 未公開の経営情報、契約情報
-- ❌ パスワード・APIキー等
+**⚠️ データ送信に関する注意**
 
-→ ブレストや雑談、公開情報ベースのお題でのみご利用ください。
+お題・キャラ設定・議論の内容はすべて Google のサーバに送信され、保存される可能性があります。
+無料プラン使用時、Google がモデル改善に使用する場合があります。
 
-### 💰 コストと制限
-- **完全無料**（Geminiの無料枠を使用）
-- 全員合計で**1日数百〜千リクエスト程度**が上限（Gemini 3.1 Flash-Lite 無料枠、Googleの設定次第）
-- 1議論あたり 10〜20リクエスト消費
+入力しないでください:
+- 社外秘・社内秘情報
+- 個人情報・顧客データ
+- 未公開の経営情報、契約情報
+- パスワード・APIキー等
+
+ブレストや雑談、公開情報ベースのお題でのみご利用ください。
+
+**📊 仕様・制限**
+
+- モデル: Gemini 3.1 Flash-Lite
+- 利用可能キャラ: 12 + カスタム
+- 1日上限: 数百〜千リクエスト程度（全員合計、無料枠）
+- 1議論あたり: 10〜20リクエスト消費
 - 上限を超えるとその日は使用できません（翌朝復活）
+- UI: Streamlit / ホスティング: Streamlit Community Cloud
+- ソース: <a href="https://github.com/katochanpei/ai-dialogue" style="color: rgba(255,255,255,0.8);">github.com/katochanpei/ai-dialogue</a>
 
-### 🧰 中身の技術
-- モデル: **Gemini 3.1 Flash-Lite**
-- UI: **Streamlit**
-- 言語: Python
-- ホスティング: Streamlit Community Cloud
-- ソース: [github.com/katochanpei/ai-dialogue](https://github.com/katochanpei/ai-dialogue)
+</div>
 """
 
 
 def _render_help_panel(expanded: bool = False) -> None:
-    """仕組みの解説パネル。"""
-    with st.expander("❓ このツールの仕組み・注意点を読む", expanded=expanded):
-        st.markdown(HELP_MARKDOWN)
+    """仕組みの解説パネル。注意点・仕様も含む。"""
+    with st.expander("ℹ️ このツールについて（仕組み・注意点・仕様）", expanded=expanded):
+        st.markdown(HELP_MARKDOWN, unsafe_allow_html=True)
 
 
 def _check_password() -> bool:
@@ -344,10 +332,7 @@ def _persona_selector(side: str, default_key: str) -> dict:
             "system": system,
         }
 
-    p = PERSONAS[selected_key]
-    with st.expander(f"プレビュー: {p['label']}", expanded=False):
-        st.markdown(f"```\n{p['system']}\n```")
-    return p
+    return PERSONAS[selected_key]
 
 
 def _render_event(ev: dict, container) -> None:
@@ -518,21 +503,6 @@ def _render_intro() -> None:
               color: #1e40af; font-size: 0.9rem;">
     🎲 何でも良いから試したい時は、サイドバー下部の <strong>「ランダム議論！」</strong> ボタンが便利です。
   </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        f"""
-<div style="
-    display: flex; gap: 24px; flex-wrap: wrap;
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.82rem;
-    margin-top: 4px;
-">
-  <span>🎭 利用可能キャラ <strong style="color: rgba(255,255,255,0.7);">{len(PERSONAS) - 1} + カスタム</strong></span>
-  <span>⚙️ 使用モデル <strong style="color: rgba(255,255,255,0.7);">Gemini 3.1 Flash-Lite</strong></span>
 </div>
 """,
         unsafe_allow_html=True,
@@ -716,7 +686,6 @@ def main() -> None:
         return
     _init_state()
     cfg = _sidebar()
-    _render_warning_banner()
 
     if st.session_state.viewing_log:
         _render_past_log(st.session_state.viewing_log)
