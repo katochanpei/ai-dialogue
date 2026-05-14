@@ -337,7 +337,7 @@ def _check_password() -> bool:
   <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
   <div class="ai-giron-title-main">AI議論!</div>
   <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 6px 0 0 0;">
-    社内向け Gemini × Gemini 議論ツール
+    Gemini × Gemini 議論ツール
   </p>
 </div>
 """,
