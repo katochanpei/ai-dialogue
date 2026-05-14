@@ -264,11 +264,9 @@ _SIDEBAR_CSS = """
         font-size: 76px !important;
         color: white !important;
         text-align: center;
-        margin: 18px auto 8px auto !important;
+        margin: 18px 0 8px 0 !important;
         line-height: 1.1;
         white-space: nowrap !important;
-        width: fit-content !important;
-        display: block !important;
     }
     .ai-giron-vs {
         font-family: 'Dela Gothic One', sans-serif !important;
@@ -357,13 +355,14 @@ def _check_password() -> bool:
     # 中央のカード型ログインフォーム
     st.markdown(
         """
-<div style="display:flex; flex-direction:column; align-items:center;
-            margin-bottom: 32px;">
-  <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
-  <div class="ai-giron-title-login">AI議論!</div>
-  <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 0 0;">
-    Gemini × Gemini 議論ツール
-  </p>
+<div style="width: 100%; display: flex; justify-content: center; margin-bottom: 32px;">
+  <div style="display: inline-flex; flex-direction: column; align-items: center;">
+    <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
+    <div class="ai-giron-title-login">AI議論!</div>
+    <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 0 0; text-align: center;">
+      Gemini × Gemini 議論ツール
+    </p>
+  </div>
 </div>
 """,
         unsafe_allow_html=True,
