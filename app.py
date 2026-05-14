@@ -523,11 +523,20 @@ def _render_intro() -> None:
         unsafe_allow_html=True,
     )
 
-    cols = st.columns(2)
-    with cols[0]:
-        st.metric("利用可能キャラ", f"{len(PERSONAS) - 1} + カスタム")
-    with cols[1]:
-        st.metric("使用モデル", "Gemini 3.1 Flash-Lite")
+    st.markdown(
+        f"""
+<div style="
+    display: flex; gap: 24px; flex-wrap: wrap;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.82rem;
+    margin-top: 4px;
+">
+  <span>🎭 利用可能キャラ <strong style="color: rgba(255,255,255,0.7);">{len(PERSONAS) - 1} + カスタム</strong></span>
+  <span>⚙️ 使用モデル <strong style="color: rgba(255,255,255,0.7);">Gemini 3.1 Flash-Lite</strong></span>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
     st.markdown("---")
     _render_help_panel(expanded=False)
