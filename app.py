@@ -115,57 +115,54 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
-    /* お題入力のプレースホルダを薄め＆黒寄りグレーに */
+    /* お題入力のプレースホルダを暗く（より具体性の高いセレクタで確実に上書き） */
+    .stApp textarea::placeholder,
+    div[data-testid="stTextArea"] textarea::placeholder,
     section[data-testid="stSidebar"] textarea::placeholder,
-    section[data-testid="stSidebar"] textarea::-webkit-input-placeholder,
-    section[data-testid="stSidebar"] textarea::-moz-placeholder {
-        color: rgba(255, 255, 255, 0.22) !important;
+    section[data-testid="stSidebar"] textarea::-webkit-input-placeholder {
+        color: #3a3a3a !important;
         opacity: 1 !important;
+        -webkit-text-fill-color: #3a3a3a !important;
     }
-    /* 「ランダム議論」ボタン：プリズム色のうねうねアニメーション（派手版） */
-    @keyframes prismFlow {
-        0%   { background-position:   0%   0%; }
-        25%  { background-position: 100%   0%; }
-        50%  { background-position: 100% 100%; }
-        75%  { background-position:   0% 100%; }
-        100% { background-position:   0%   0%; }
+    /* 「ランダム議論」ボタン：シンプルだが明確に色が流れる */
+    @keyframes prismShift {
+        0%   { background-position:   0%  50%; }
+        50%  { background-position: 100%  50%; }
+        100% { background-position:   0%  50%; }
     }
-    @keyframes prismBreathe {
+    @keyframes prismGlow {
         0%, 100% {
             box-shadow:
-                0 0 14px rgba(255, 255, 255, 0.22),
-                inset 0 0 14px rgba(255, 255, 255, 0.10);
-            filter: brightness(1.00) saturate(1.00);
+                0 0 12px rgba(255, 255, 255, 0.22),
+                inset 0 0 12px rgba(255, 255, 255, 0.10);
         }
         50% {
             box-shadow:
-                0 0 38px rgba(255, 255, 255, 0.55),
-                inset 0 0 30px rgba(255, 255, 255, 0.22);
-            filter: brightness(1.12) saturate(1.20);
+                0 0 32px rgba(255, 255, 255, 0.55),
+                inset 0 0 24px rgba(255, 255, 255, 0.22);
         }
     }
-    @keyframes prismHueShift {
-        0%, 100% { filter: hue-rotate(0deg); }
-        50%      { filter: hue-rotate(25deg); }
-    }
+    /* セレクタを 2 階層深くして Streamlit の内部スタイルより優先 */
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[kind="secondary"] {
-        background: linear-gradient(135deg, __PRISM_COLORS__) !important;
-        background-size: 600% 600% !important;
+        background-color: transparent !important;
+        background-image: linear-gradient(90deg, __PRISM_COLORS__) !important;
+        background-size: 300% 100% !important;
+        background-position: 0% 50% !important;
         animation:
-            prismFlow 4.5s linear infinite,
-            prismBreathe 2.4s ease-in-out infinite,
-            prismHueShift 8s ease-in-out infinite !important;
-        color: #fff !important;
-        border: 1px solid rgba(255, 255, 255, 0.40) !important;
-        font-weight: 700 !important;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.50) !important;
+            prismShift 3.5s linear infinite,
+            prismGlow 2.2s ease-in-out infinite !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(255, 255, 255, 0.45) !important;
+        font-weight: 800 !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55) !important;
         transition: transform 0.2s ease !important;
     }
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
         animation:
-            prismFlow 2s linear infinite,
-            prismBreathe 1.2s ease-in-out infinite,
-            prismHueShift 4s ease-in-out infinite !important;
+            prismShift 1.5s linear infinite,
+            prismGlow 0.9s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 </style>
