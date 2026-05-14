@@ -160,12 +160,12 @@ HELP_MARKDOWN = """
 
 ### 💰 コストと制限
 - **完全無料**（Geminiの無料枠を使用）
-- 全員合計で**1日1000リクエスト**が上限（Gemini 2.5 Flash-Lite）
+- 全員合計で**1日数百〜千リクエスト程度**が上限（Gemini 3.1 Flash-Lite 無料枠、Googleの設定次第）
 - 1議論あたり 10〜20リクエスト消費
 - 上限を超えるとその日は使用できません（翌朝復活）
 
 ### 🧰 中身の技術
-- モデル: **Gemini 2.5 Flash-Lite**
+- モデル: **Gemini 3.1 Flash-Lite**
 - UI: **Streamlit**
 - 言語: Python
 - ホスティング: Streamlit Community Cloud
@@ -410,7 +410,7 @@ def _render_intro() -> None:
     with cols[0]:
         st.metric("利用可能キャラ", f"{len(PERSONAS) - 1} + カスタム")
     with cols[1]:
-        st.metric("使用モデル", "Gemini 2.5 Flash-Lite")
+        st.metric("使用モデル", "Gemini 3.1 Flash-Lite")
 
     st.markdown("---")
     _render_help_panel(expanded=False)

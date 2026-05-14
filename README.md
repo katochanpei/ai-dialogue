@@ -106,7 +106,7 @@ UI からはサイドバーで過去ログを選んで閲覧、ダウンロー�
 
 ## モデル
 
-`gemini-2.5-flash-lite`（無料枠 15 RPM / 1000 RPD、複数人共有でも安定）。
+`gemini-3.1-flash-lite`（最新の Flash-Lite 系、無料枠あり）。
 変更は `dialogue_core.py` の `MODEL` 定数。
 
 ## Streamlit Cloud にデプロイ（チーム共有）

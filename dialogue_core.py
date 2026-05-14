@@ -75,7 +75,7 @@ def _safe_call_with_retry(
 
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
-MODEL = "gemini-2.5-flash-lite"
+MODEL = "gemini-3.1-flash-lite"
 
 
 def _get_api_key() -> str | None:
