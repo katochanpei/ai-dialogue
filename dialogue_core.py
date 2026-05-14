@@ -50,6 +50,69 @@ DEFAULT_TOPIC = (
 MIN_ROUNDS_BEFORE_JUDGE = 2
 
 
+def check_api_availability() -> tuple[bool, str, str]:
+    """議論開始前に API が利用可能かを最小リクエストでチェックする。
+
+    Returns:
+        (ok, message, code)
+        code: "ok" | "no_key" | "rate_limit_day" | "rate_limit_minute" |
+              "free_tier_zero" | "auth_error" | "model_not_found" | "unknown"
+    """
+    api_key = _get_api_key()
+    if not api_key:
+        return (
+            False,
+            "GEMINI_API_KEY が設定されていません。.env または Streamlit Cloud の Secrets を確認してください。",
+            "no_key",
+        )
+    try:
+        client = genai.Client(api_key=api_key)
+        client.models.generate_content(
+            model=MODEL,
+            contents="ping",
+            config=types.GenerateContentConfig(max_output_tokens=1),
+        )
+        return True, "API利用可能", "ok"
+    except Exception as e:
+        msg = str(e)
+        if "RESOURCE_EXHAUSTED" in msg or "429" in msg:
+            if "limit: 0" in msg:
+                return (
+                    False,
+                    f"モデル『{MODEL}』が無料枠の対象から外されました（limit: 0）。\n"
+                    f"対応: `dialogue_core.py` の MODEL 定数を別モデル"
+                    f"（例: gemini-2.5-flash, gemini-2.5-flash-lite）に変更してください。",
+                    "free_tier_zero",
+                )
+            if "PerDay" in msg:
+                return (
+                    False,
+                    f"モデル『{MODEL}』の1日あたりリクエスト上限に達しました（無料枠）。\n"
+                    "対応: 翌日まで待つか、別のAPIキーやモデルに切り替えてください。",
+                    "rate_limit_day",
+                )
+            return (
+                False,
+                "短時間に多くのリクエストが行われたため、レート制限がかかりました（無料枠の毎分上限）。\n"
+                "対応: 1〜2分待ってから再試行してください。",
+                "rate_limit_minute",
+            )
+        if "PERMISSION" in msg or "401" in msg or "API key not valid" in msg.lower():
+            return (
+                False,
+                "APIキーが無効または権限がありません。\n"
+                "対応: Google AI Studio でキーを再生成し、.env または Secrets に設定してください。",
+                "auth_error",
+            )
+        if "not found" in msg.lower() or "404" in msg:
+            return (
+                False,
+                f"モデル『{MODEL}』が見つかりません。\n対応: MODEL 定数のスペルを確認してください。",
+                "model_not_found",
+            )
+        return False, f"APIエラー:\n{msg[:500]}", "unknown"
+
+
 def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
     prompt = f"""次の2人の最新発言を読み、両者が同じ1つのサービス案で合意したか判定してください。
 

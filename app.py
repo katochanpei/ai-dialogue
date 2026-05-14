@@ -37,6 +37,7 @@ def _is_multi_user_mode() -> bool:
 from dialogue_core import (  # noqa: E402
     DEFAULT_TOPIC,
     build_log_markdown,
+    check_api_availability,
     dialogue_events,
     save_log,
 )
@@ -76,17 +77,17 @@ def _render_warning_banner() -> None:
     """常時表示の注意書き（小さめ）。"""
     st.caption(
         "⚠️ お題・会話内容は Google の Gemini API に送信されます。"
-        "**社内秘・個人情報・顧客データは入れんといて。**"
+        "**社内秘・個人情報・顧客データは入力しないでください。**"
     )
 
 
 HELP_MARKDOWN = """
-### 🤔 何ができるん？
+### 🤔 何ができるか
 - お題を与えると、**2人のAIキャラが議論して合意**に至る
 - 3往復ごとに**ファシリテーターAI**が論点を整理して介入
 - 終わったら**要約と次のアクション**を提案してくれる
 
-### ⚙️ どうやって動いてるん？（噛み砕いて）
+### ⚙️ どうやって動いているか（噛み砕いて）
 
 ```
 あなたのブラウザ ─► Streamlit Cloud ─► Google Gemini API
@@ -99,29 +100,29 @@ HELP_MARKDOWN = """
                                     └ 要約役（結論まとめ）
 ```
 
-1. **Gemini = Googleが作った大規模言語モデル**（ChatGPTのGoogle版みたいなん）
-2. **API経由で呼ぶ**: 毎回ネット越しに Google のサーバに「これ考えて」って投げる
+1. **Gemini = Googleが作った大規模言語モデル**（ChatGPTのGoogle版にあたるもの）
+2. **API経由で呼び出す**: 毎回ネット越しに Google のサーバに「これを考えて」と投げる
 3. **役割演技**: 同じGeminiでも違う性格設定（システムプロンプトと呼ぶ）を与えると、別人格として振る舞う
 4. **会話の流れ**: あなたのお題 → キャラA発言 → キャラB発言 → 判定AIが合意チェック → 合意なら要約、まだなら次のラウンドへ
 
-### 📤 何が送信されるん？
-- ✅ お題、キャラ設定、議論の中身すべて
-- ⚠️ これらは**Googleのサーバに保存される可能性あり**
-- ⚠️ 無料プラン使用時、Googleが**モデル改善に使う場合あり**
+### 📤 何が送信されるか
+- ✅ お題、キャラ設定、議論の内容すべて
+- ⚠️ これらは**Googleのサーバに保存される可能性があります**
+- ⚠️ 無料プラン使用時、Googleが**モデル改善に使用する場合があります**
 
-**絶対に入れたらアカンもの:**
+**入力してはいけないもの:**
 - ❌ 社外秘・社内秘情報
 - ❌ 個人情報・顧客データ
 - ❌ 未公開の経営情報、契約情報
 - ❌ パスワード・APIキー等
 
-→ ブレストや雑談、公開情報ベースのお題でだけ使ってな。
+→ ブレストや雑談、公開情報ベースのお題でのみご利用ください。
 
 ### 💰 コストと制限
 - **完全無料**（Geminiの無料枠を使用）
-- 全員合計で**1日1500リクエスト**が上限（Gemini 2.5 Flash-Lite）
+- 全員合計で**1日1000リクエスト**が上限（Gemini 2.5 Flash-Lite）
 - 1議論あたり 10〜20リクエスト消費
-- 上限超えたらその日は使えへん（翌朝復活）
+- 上限を超えるとその日は使用できません（翌朝復活）
 
 ### 🧰 中身の技術
 - モデル: **Gemini 2.5 Flash-Lite**
@@ -164,7 +165,7 @@ def _check_password() -> bool:
             st.session_state.is_admin = False
             st.rerun()
         else:
-            st.error("パスワードが違うで")
+            st.error("パスワードが違います")
     return False
 
 
@@ -334,12 +335,12 @@ def _render_intro() -> None:
     st.title("🎙 AI Dialogue")
     st.markdown(
         """
-左のサイドバーでお題とキャラA/Bを選んで、**▶️ 議論スタート** を押してな。
+左のサイドバーでお題とキャラA/Bを選んで、**▶️ 議論スタート** を押してください。
 
 - Gemini同士が自律的に議論して、合意するまで進む
 - 3往復ごとにファシリテーターが論点を整理
-- 全部ターミナルやなくてここで観戦できる
-- 終わったらログが `logs/` に保存される
+- ターミナルではなく、ここで観戦できる
+- 終了後はログが `logs/` に保存される
         """
     )
 
@@ -419,6 +420,15 @@ def main() -> None:
     if st.session_state.viewing_log:
         _render_past_log(st.session_state.viewing_log)
     elif cfg["start"]:
+        with st.spinner("Gemini API の利用可否を確認しています..."):
+            ok, message, code = check_api_availability()
+        if not ok:
+            st.title("🎙 AI Dialogue")
+            st.error("❌ Gemini API が現在利用できません。議論を開始できません。")
+            st.markdown(f"**理由:**\n\n{message}")
+            with st.expander("エラーコード（詳細）"):
+                st.code(code)
+            return
         _run_dialogue(cfg)
     elif st.session_state.last_log_md:
         st.title("🎙 AI Dialogue")

@@ -11,7 +11,12 @@ from __future__ import annotations
 import argparse
 import sys
 
-from dialogue_core import DEFAULT_TOPIC, dialogue_events, save_log
+from dialogue_core import (
+    DEFAULT_TOPIC,
+    check_api_availability,
+    dialogue_events,
+    save_log,
+)
 from personas import DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS
 
 
@@ -88,6 +93,14 @@ def main() -> int:
     topic = _resolve_topic(args)
     persona_a = PERSONAS[args.persona_a]
     persona_b = PERSONAS[args.persona_b]
+
+    print("\nGemini API の利用可否を確認中...")
+    ok, message, code = check_api_availability()
+    if not ok:
+        print(f"\n❌ Gemini API が利用できません（{code}）")
+        print(f"\n理由:\n{message}\n", file=sys.stderr)
+        return 1
+    print("✅ API利用可能。議論を開始します。\n")
 
     events_log: list[dict] = []
     for ev in dialogue_events(
