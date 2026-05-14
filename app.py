@@ -214,32 +214,6 @@ _SIDEBAR_CSS = """
         font-size: 11px !important;
     }
 
-    /* === デコラティブヘッディング用クラス === */
-    .ai-giron-decohead {
-        font-family: 'Dela Gothic One', sans-serif !important;
-        text-align: center;
-        line-height: 1.05;
-        margin: 8px 0 18px 0;
-        color: transparent;
-        -webkit-text-stroke: 1.5px #cf22ff;
-        text-stroke: 1.5px #cf22ff;
-        text-shadow:
-            0 0 12px rgba(207, 34, 255, 0.5),
-            0 0 24px rgba(207, 34, 255, 0.25);
-        white-space: nowrap;
-        overflow-x: visible;
-    }
-    .ai-giron-decohead .big { font-size: 64px; }
-    .ai-giron-decohead .small { font-size: 36px; }
-    .ai-giron-decohead .slash {
-        color: transparent;
-        -webkit-text-stroke: 2px #0effb3;
-        text-shadow: 0 0 10px rgba(14, 255, 179, 0.5);
-        font-size: 56px;
-        display: inline-block;
-        margin: 0 18px;
-        transform: translateY(4px);
-    }
     .ai-giron-title-main {
         font-family: 'Dela Gothic One', sans-serif !important;
         font-size: 38px !important;
@@ -492,12 +466,33 @@ def _main_form() -> dict:
         unsafe_allow_html=True,
     )
 
-    # === デコラティブ見出し ===
+    # === デコラティブ見出し（SVG で Figma 完全再現） ===
     st.markdown(
         """
-<div class="ai-giron-decohead">
-  <span class="slash">＼</span><span class="big">議論</span><span class="small">してもらいたい</span><span class="big">お題</span><span class="small">は？</span><span class="slash">／</span>
-</div>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 100"
+     preserveAspectRatio="xMidYMid meet"
+     style="width:100%; max-width:720px; display:block; margin:8px auto 18px auto;">
+  <defs>
+    <linearGradient id="aiGironGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cf22ff"/>
+      <stop offset="100%" stop-color="#0effb3"/>
+    </linearGradient>
+  </defs>
+  <!-- 左スラッシュ \\ -->
+  <line x1="6" y1="24" x2="37" y2="74"
+        stroke="url(#aiGironGrad)" stroke-width="2"/>
+  <!-- 右スラッシュ / -->
+  <line x1="714" y1="24" x2="683" y2="74"
+        stroke="url(#aiGironGrad)" stroke-width="2"/>
+  <!-- 見出しテキスト：transparent fill + gradient stroke -->
+  <text x="360" y="72" text-anchor="middle"
+        font-family="'Dela Gothic One', sans-serif"
+        fill="none"
+        stroke="url(#aiGironGrad)" stroke-width="0.82"
+        paint-order="stroke">
+    <tspan font-size="64.195">議論</tspan><tspan font-size="36.212">してもらいたい</tspan><tspan font-size="64.195">お題</tspan><tspan font-size="36.212">は？</tspan>
+  </text>
+</svg>
 """,
         unsafe_allow_html=True,
     )
