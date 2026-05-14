@@ -1308,15 +1308,9 @@ def main() -> None:
 
         cfg = _resolve_random_personas(cfg)
 
-        with st.spinner("AIたちの調子、見てる..."):
-            ok, message, code = check_api_availability()
-        if not ok:
-            st.error("❌ AIたちが今ちょっと忙しいみたい。今は話せへんって。")
-            st.markdown(f"**理由:**\n\n{message}")
-            with st.expander("エラーコード（詳細）"):
-                st.code(code)
-            return
-
+        # API プリチェック廃止：dialogue_events 内で API エラーは error イベントとして
+        # 流れてくるので、ここで二重に確認する必要なし。失敗してもチャットエリアに
+        # st.error として描画される。
         _run_dialogue(cfg)
 
         # 議論完了後：底部に控えめな戻るリンク
