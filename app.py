@@ -312,17 +312,21 @@ def _render_event(ev: dict, container) -> None:
                     st.markdown(
                         f"""
 <div style="
-    background: rgba(59, 130, 246, 0.10);
-    padding: 12px 16px;
-    border-left: 4px solid #3b82f6;
-    border-radius: 6px;
-    margin-bottom: 16px;
+    background: linear-gradient(135deg,
+        rgba(59, 130, 246, 0.16) 0%,
+        rgba(30, 64, 175, 0.22) 100%);
+    padding: 22px 26px;
+    border-left: 5px solid #3b82f6;
+    border-radius: 10px;
+    margin-bottom: 26px;
 ">
-  <div style="font-size: 0.72rem; color: #93c5fd; font-weight: 700;
-              letter-spacing: 0.14em; margin-bottom: 4px;">
-    📋 議論のお題
+  <div style="font-size: 0.78rem; color: #93c5fd; font-weight: 700;
+              letter-spacing: 0.18em; margin-bottom: 10px;
+              text-transform: uppercase;">
+    📋 お題
   </div>
-  <div style="font-size: 1rem; line-height: 1.5;">
+  <div style="font-size: 1.65rem; font-weight: 700; line-height: 1.55;
+              color: #ffffff; letter-spacing: 0.01em;">
     {html.escape(ev["topic"])}
   </div>
 </div>

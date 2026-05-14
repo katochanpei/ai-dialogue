@@ -528,7 +528,7 @@ def build_log_markdown(
             lines.append("# 📋 結論ブリーフィング")
             lines.append("")
             if ev.get("topic"):
-                lines.append(f"**📋 議論のお題:** {ev['topic']}")
+                lines.append(f"**📋 お題:** {ev['topic']}")
                 lines.append("")
             lines.append(ev["text"])
             lines.append("")
