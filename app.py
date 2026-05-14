@@ -301,12 +301,6 @@ _SIDEBAR_CSS = """
         font-size: 13px !important;
     }
 
-    /* ボタンラッパーは常に中央寄せ（width が 100% 未満でも中央に揃う） */
-    div[data-testid="stButton"] {
-        display: flex !important;
-        justify-content: center !important;
-    }
-
     /* ボタン間スペーサ（PC基準値、スマホで縮める） */
     .btn-gap { height: 12px; }
 
@@ -326,6 +320,11 @@ _SIDEBAR_CSS = """
 
     /* スマホ：VSの上下を更に詰める／ボタンを高め・幅80%・隙間半減 */
     @media (max-width: 768px) {
+        /* スマホ時のみボタンラッパーを flex 中央寄せ（PCでは use_container_width が効くので触らない） */
+        div[data-testid="stButton"] {
+            display: flex !important;
+            justify-content: center !important;
+        }
         .ai-giron-vs {
             padding-top: 0 !important;
             padding-bottom: 0 !important;
