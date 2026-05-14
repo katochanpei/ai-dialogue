@@ -66,7 +66,7 @@ from dialogue_core import (  # noqa: E402
     dialogue_events,
     save_log,
 )
-from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS  # noqa: E402
+from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS, RANDOM_KEY  # noqa: E402
 
 
 st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
@@ -146,41 +146,29 @@ _SIDEBAR_CSS = """
         font-weight: 500 !important;
     }
 
-    /* === ボタン共通：ピル型 + Dela Gothic One（デカく・コンテンツ左寄せ） === */
+    /* === ボタン共通：ピル型、常識的なサイズの普通フォント === */
     div[data-testid="stButton"] button {
         border-radius: 999px !important;
-        padding: 22px 44px !important;
-        font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 24px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.02em !important;
+        padding: 10px 20px !important;
+        font-family: 'Inter', 'Helvetica Neue', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
         white-space: nowrap !important;
-        line-height: 1.1 !important;
-        min-height: 76px !important;
-        justify-content: flex-start !important;
-        text-align: left !important;
+        line-height: 1.4 !important;
+        min-height: auto !important;
+        justify-content: center !important;
+        text-align: center !important;
     }
     div[data-testid="stButton"] button p {
-        font-family: 'Dela Gothic One', 'Inter', sans-serif !important;
-        font-size: 24px !important;
+        font-family: 'Inter', 'Helvetica Neue', sans-serif !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
         white-space: nowrap !important;
-        text-align: left !important;
+        text-align: center !important;
     }
 
-    /* プライマリボタン：マゼンタ→ミントの派手グラデ */
-    div[data-testid="stButton"] button[kind="primary"] {
-        background: linear-gradient(90deg, #cf22ff 0%, #0effb3 100%) !important;
-        color: #ffffff !important;
-        border: none !important;
-        box-shadow: 0 0 18px rgba(207, 34, 255, 0.35) !important;
-    }
-    div[data-testid="stButton"] button[kind="primary"]:hover {
-        box-shadow: 0 0 28px rgba(207, 34, 255, 0.6),
-                    0 0 18px rgba(14, 255, 179, 0.4) !important;
-        transform: translateY(-1px) scale(1.02) !important;
-    }
-
-    /* === セカンダリボタン（ランダム議論）：オーロラ === */
+    /* プライマリボタン（議論スタート）：オーロラ */
     @keyframes auroraDrift {
         0%   { background-position:   0%   0%; }
         25%  { background-position: 100%   0%; }
@@ -200,7 +188,7 @@ _SIDEBAR_CSS = """
                 inset 0 0 22px rgba(255, 255, 255, 0.18);
         }
     }
-    div[data-testid="stButton"] button[kind="secondary"] {
+    div[data-testid="stButton"] button[kind="primary"] {
         background-color: #f8f5ff !important;
         background-image:
             radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
@@ -215,23 +203,97 @@ _SIDEBAR_CSS = """
         border: 2px solid rgba(255, 255, 255, 0.6) !important;
         transition: transform 0.2s ease !important;
     }
-    div[data-testid="stButton"] button[kind="secondary"]:hover {
+    div[data-testid="stButton"] button[kind="primary"]:hover {
         animation:
             auroraDrift 3s ease-in-out infinite,
             auroraGlow 1.3s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 
-    /* === エクスパンダー：枠なし === */
-    [data-testid="stExpander"],
-    [data-testid="stExpander"] details {
+    /* 戻るアクション（底部）：薄い枠付き控えめボタン
+       body 先頭付け＋[kind="secondary"] 末尾付けで特異性を上げ、
+       オーロラの kind="secondary" スタイルに勝つように */
+    body [data-testid="element-container"]:has(.back-action-wrap)
+        + [data-testid="element-container"] button[kind="secondary"] {
+        background: transparent !important;
+        background-image: none !important;
+        background-color: transparent !important;
+        animation: none !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        padding: 10px 20px !important;
+        min-height: auto !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+        letter-spacing: 0 !important;
+        text-shadow: none !important;
+    }
+    body [data-testid="element-container"]:has(.back-action-wrap)
+        + [data-testid="element-container"] button[kind="secondary"] p {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 13px !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+    body [data-testid="element-container"]:has(.back-action-wrap)
+        + [data-testid="element-container"] button[kind="secondary"]:hover {
+        background: rgba(255, 255, 255, 0.06) !important;
+        background-image: none !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+        animation: none !important;
+        transform: none !important;
+    }
+
+    /* トップ左の戻るリンク：純粋な <a> タグ。button 要素ではないので
+       Streamlit のボタンスタイルと一切競合しない */
+    a.back-top-link {
+        color: rgba(255, 255, 255, 0.5) !important;
+        font-size: 16px !important;
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 400 !important;
+        text-decoration: none !important;
+        display: inline-block;
+        padding: 4px 8px;
+    }
+    a.back-top-link:hover {
+        color: rgba(255, 255, 255, 0.85) !important;
+        text-decoration: none !important;
+    }
+
+    /* === セカンダリボタン（ランダム議論）：単色インディゴ、アニメ無し === */
+    div[data-testid="stButton"] button[kind="secondary"] {
+        background: #6366f1 !important;
+        background-image: none !important;
+        color: #ffffff !important;
         border: none !important;
         box-shadow: none !important;
+        animation: none !important;
+        transition: background-color 0.15s ease, transform 0.15s ease !important;
+    }
+    div[data-testid="stButton"] button[kind="secondary"] p {
+        color: #ffffff !important;
+    }
+    div[data-testid="stButton"] button[kind="secondary"]:hover {
+        background: #7c7af2 !important;
+        background-image: none !important;
+        transform: translateY(-1px) scale(1.02) !important;
+    }
+
+    /* === エクスパンダー：薄い枠線つき、角丸 === */
+    [data-testid="stExpander"] {
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border-radius: 8px !important;
+        background: transparent !important;
+        overflow: hidden !important;
+    }
+    [data-testid="stExpander"] details {
+        border: none !important;
         background: transparent !important;
     }
     [data-testid="stExpander"] details > summary {
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
+        padding: 10px 16px !important;
         font-size: 13px !important;
         border: none !important;
     }
@@ -239,13 +301,57 @@ _SIDEBAR_CSS = """
         font-size: 13px !important;
     }
 
-    /* スマホ：VSの上下gap半減 */
+    /* ボタン間スペーサ（PC基準値、スマホで縮める） */
+    .btn-gap { height: 12px; }
+
+    /* ランダムボタン直前のマーカー（::before で🎲を出す目印） */
+    .random-btn-wrap { display: none; }
+
+    /* ランダムボタンの先頭に🎲を文字より大きく表示（PC / スマホ共通） */
+    body [data-testid="element-container"]:has(.random-btn-wrap)
+        + [data-testid="element-container"] button[kind="secondary"]::before {
+        content: "🎲";
+        font-size: 1.45em;
+        line-height: 1;
+        margin-right: 10px;
+        vertical-align: -2px;
+        display: inline-block;
+    }
+
+    /* スマホ：VSの上下を更に詰める／ボタンを高め・幅80%・隙間半減 */
     @media (max-width: 768px) {
         .ai-giron-vs {
-            padding-top: 8px !important;
+            padding-top: 0 !important;
             padding-bottom: 0 !important;
-            font-size: 20px !important;
+            margin: 0 !important;
+            font-size: 18px !important;
+            line-height: 1 !important;
         }
+        /* VS を含む列ブロックの上下余白を圧縮 */
+        div[data-testid="stColumn"]:has(.ai-giron-vs) {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: -10px !important;
+            margin-bottom: -10px !important;
+        }
+        /* スタート／ランダムボタン：高さ 1.5倍、幅 80%、中央寄せ */
+        div[data-testid="stButton"] button[kind="primary"],
+        div[data-testid="stButton"] button[kind="secondary"] {
+            padding-top: 18px !important;
+            padding-bottom: 18px !important;
+            width: 80% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+        /* 戻る系（back-action-wrap 直後）の secondary は対象外に戻す */
+        body [data-testid="element-container"]:has(.back-action-wrap)
+            + [data-testid="element-container"] button[kind="secondary"] {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+            width: auto !important;
+        }
+        /* ボタン間スペーサを半減 */
+        .btn-gap { height: 6px !important; }
     }
 
     .ai-giron-title-main {
@@ -264,7 +370,7 @@ _SIDEBAR_CSS = """
         font-size: 76px !important;
         color: white !important;
         text-align: center;
-        margin: 18px 0 8px 0 !important;
+        margin: 18px 0 0px 0 !important;
         line-height: 1.1;
         white-space: nowrap !important;
     }
@@ -342,11 +448,21 @@ def _check_password() -> bool:
         """
 <style>
     section[data-testid="stSidebar"] { display: none !important; }
-    [data-testid="stMainBlockContainer"],
-    .main .block-container {
-        max-width: 420px !important;
-        padding-top: 6rem !important;
-    }
+
+/* メインを縦横ど真ん中に */
+[data-testid="stMain"] {
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+}
+
+[data-testid="stMainBlockContainer"],
+.main .block-container {
+    max-width: 420px !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
 </style>
 """,
         unsafe_allow_html=True,
@@ -355,14 +471,19 @@ def _check_password() -> bool:
     # 中央のカード型ログインフォーム
     st.markdown(
         """
-<div style="width: 100%; display: flex; justify-content: center; margin-bottom: 32px;">
-  <div style="display: inline-flex; flex-direction: column; align-items: center;">
-    <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
-    <div class="ai-giron-title-login">AI議論!</div>
-    <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 0 0; text-align: center;">
-      Gemini × Gemini 議論ツール
-    </p>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 8px;">
+  <!-- 1行目: 🗣️ 🗣️ -->
+  <div style="display: flex; gap: clamp(8px, 3vw, 24px); align-items: center;">
+    <span style="font-size: clamp(64px, 18vw, 128px); line-height: 0.75;">🗣️</span>
+    <span style="display: inline-block; transform: scaleX(-1);
+                 font-size: clamp(64px, 18vw, 128px); line-height: 0.75;">🗣️</span>
   </div>
+  <!-- 2行目: AI議論! -->
+  <div class="ai-giron-title-login">AI議論!</div>
+  <!-- サブタイトル -->
+  <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
+    Gemini × Gemini 議論ツール
+  </p>
 </div>
 """,
         unsafe_allow_html=True,
@@ -501,27 +622,37 @@ def _list_past_logs() -> list[Path]:
 
 def _main_form() -> dict:
     """中央寄せの ChatGPT 風メインフォーム。お題が主役。"""
-    # === 🌎 大陸 1: タイトル + デコ見出し ===
+    # === セクション1: タイトル + サブタイトル ===
     st.markdown(
         """
-<div style="display:flex; flex-direction:column; align-items:center;
-            padding-top: 24px; margin-bottom: 18px;">
-  <div style="font-size: 72px; line-height: 1.25; padding-top: 8px;">🎙</div>
+<div style="display: flex; flex-direction: column; align-items: center;
+            gap: 8px; padding-top: 24px; margin-bottom: 18px;">
+  <!-- 1行目: 🗣️ 🗣️←反転 -->
+  <div style="display: flex; gap: clamp(8px, 3vw, 24px); align-items: center;">
+    <span style="font-size: clamp(48px, 12vw, 72px); line-height: 0.75;">🗣️</span>
+    <span style="display: inline-block; transform: scaleX(-1);
+                 font-size: clamp(48px, 12vw, 72px); line-height: 0.75;">🗣️</span>
+  </div>
+  <!-- 2行目: AI議論! -->
   <div class="ai-giron-title-main">AI議論!</div>
+  <!-- サブタイトル -->
+  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
+    Gemini × Gemini 議論ツール
+  </p>
 </div>
 """,
         unsafe_allow_html=True,
     )
 
-    # === 🌊 大河（タイトル → フォーム） ===
-    st.markdown('<div style="height: 40px;"></div>', unsafe_allow_html=True)
+    # === セクション間スペース（タイトル → フォーム） ===
+    st.markdown('<div style="height: 16px;"></div>', unsafe_allow_html=True)
 
-    # === 🌎 大陸 2: フォーム本体 ===
+    # === セクション2: 入力フォーム本体 ===
     # お題テキストエリア（プレースホルダで入力を促す）
     topic_input = st.text_area(
         "お題",
         value="",
-        placeholder="議論してもらいたいお題を入力してください…（空のまま開始するとサンプルお題で議論します）",
+        placeholder="Gemini × Gemini に議論してもらいたいお題を入力してください…（空のまま開始するとサンプルお題で議論します）",
         height=160,
         key="topic_input",
         label_visibility="collapsed",
@@ -530,7 +661,7 @@ def _main_form() -> dict:
     topic = topic_input.strip() or DEFAULT_TOPIC
 
     # ─── お題 → キャラ間の余白 ───
-    st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 0px;"></div>', unsafe_allow_html=True)
 
     # キャラA / VS / キャラB
     col_a, col_vs, col_b = st.columns([298, 80, 298])
@@ -542,34 +673,35 @@ def _main_form() -> dict:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
     # ─── キャラ → ボタン間の余白 ───
-    st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 36px;"></div>', unsafe_allow_html=True)
 
-    # ボタン群
-    sp1, btn_col_main, btn_col_sub, sp2 = st.columns([69, 285, 285, 69])
-    with btn_col_main:
+        # ボタン群（縦並び・中央寄せ）
+    _, btn_center, _ = st.columns([1, 4, 1])
+    with btn_center:
         start = st.button(
-            "▶️ 議論スタート！",
+            "議論スタート！",
             type="primary",
             use_container_width=True,
             disabled=st.session_state.running,
         )
-    with btn_col_sub:
+        st.markdown('<div class="btn-gap"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="random-btn-wrap"></div>', unsafe_allow_html=True)
         random_start = st.button(
-            "🎲 ランダム議論！",
+            "ランダム議論！",
             type="secondary",
             use_container_width=True,
             disabled=st.session_state.running,
             help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
         )
 
-    # === 🌊 大河（大陸2→大陸3 の境界） ===
+    # === セクション間スペース（フォーム → 折りたたみ） ===
     st.markdown('<div style="height: 64px;"></div>', unsafe_allow_html=True)
 
-    # === 🌎 大陸 3: 折りたたみ系 ===
+    # === セクション3: 折りたたみ要素（詳細パラメータ／ヘルプ） ===
     st.markdown(
         """
 <style>
-  [data-testid="stExpander"] { margin-bottom: 14px !important; }
+  [data-testid="stExpander"] { margin-bottom: 0px !important; }
 </style>
 """,
         unsafe_allow_html=True,
@@ -620,8 +752,8 @@ def _render_past_log(log_path: Path) -> None:
 
 def _randomize_cfg(cfg: dict) -> dict:
     """お題・キャラ・パラメータを全てランダムに上書きする。"""
-    keys_no_custom = [k for k in PERSONAS.keys() if k != CUSTOM_KEY]
-    a_key, b_key = random.sample(keys_no_custom, 2)
+    keys_pool = [k for k in PERSONAS.keys() if k not in (CUSTOM_KEY, RANDOM_KEY)]
+    a_key, b_key = random.sample(keys_pool, 2)
     return {
         **cfg,
         "topic": random.choice(RANDOM_TOPICS),
@@ -631,6 +763,32 @@ def _randomize_cfg(cfg: dict) -> dict:
         "interval": random.randint(2, 4),
         "delay": round(random.uniform(1.0, 2.5), 1),
     }
+
+
+def _resolve_random_personas(cfg: dict) -> dict:
+    """persona_a / persona_b の key が "random" のとき、実ペルソナへ解決する。
+
+    両方ランダムなら 2 つ異なるキャラ、片方のみなら相手と被らないキャラを抽選する。
+    """
+    keys_pool = [k for k in PERSONAS.keys() if k not in (CUSTOM_KEY, RANDOM_KEY)]
+    a_is_random = cfg["persona_a"].get("key") == RANDOM_KEY
+    b_is_random = cfg["persona_b"].get("key") == RANDOM_KEY
+    if not a_is_random and not b_is_random:
+        return cfg
+    new_cfg = dict(cfg)
+    if a_is_random and b_is_random:
+        a_key, b_key = random.sample(keys_pool, 2)
+        new_cfg["persona_a"] = PERSONAS[a_key]
+        new_cfg["persona_b"] = PERSONAS[b_key]
+    elif a_is_random:
+        used = cfg["persona_b"].get("key")
+        choices = [k for k in keys_pool if k != used] or keys_pool
+        new_cfg["persona_a"] = PERSONAS[random.choice(choices)]
+    else:
+        used = cfg["persona_a"].get("key")
+        choices = [k for k in keys_pool if k != used] or keys_pool
+        new_cfg["persona_b"] = PERSONAS[random.choice(choices)]
+    return new_cfg
 
 
 def _run_dialogue(cfg: dict) -> None:
@@ -787,21 +945,49 @@ def _run_dialogue(cfg: dict) -> None:
     )
 
 
+def _reset_dialogue_state() -> None:
+    """議論完了後の状態をクリアしてフォームに戻すための初期化。"""
+    for key in ("last_log_md", "last_log_name", "last_log_path"):
+        if key in st.session_state:
+            st.session_state[key] = None
+
+
 def main() -> None:
     if not _check_password():
         return
     _init_state()
 
+    # クエリパラメータ経由の「やっぱり戻る」リンク検出
+    if "back" in st.query_params:
+        _reset_dialogue_state()
+        st.query_params.clear()
+        st.rerun()
+
     if st.session_state.viewing_log:
         _render_past_log(st.session_state.viewing_log)
         return
 
-    cfg = _main_form()
+    # フォームを差し替え可能なスロットに入れる
+    form_slot = st.empty()
+    with form_slot.container():
+        cfg = _main_form()
 
     if cfg["start"] or cfg["random_start"]:
+        # フォームを消して画面を議論専用に切り替える
+        form_slot.empty()
+
+        # 左上の戻るリンク（純粋な <a> タグ、button要素ではない）
+        st.markdown(
+            '<a href="?back=1" class="back-top-link">← やっぱり戻る</a>',
+            unsafe_allow_html=True,
+        )
+
         if cfg["random_start"]:
             cfg = _randomize_cfg(cfg)
             st.info("🎲 ランダムモード: お題・キャラ・パラメータを抽選しました。")
+
+        cfg = _resolve_random_personas(cfg)
+
         with st.spinner("Gemini API の利用可否を確認しています..."):
             ok, message, code = check_api_availability()
         if not ok:
@@ -810,7 +996,15 @@ def main() -> None:
             with st.expander("エラーコード（詳細）"):
                 st.code(code)
             return
+
         _run_dialogue(cfg)
+
+        # 議論完了後：底部に控えめな戻るリンク
+        st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="back-action-wrap"></div>', unsafe_allow_html=True)
+        if st.button("← 新しい議論を始める", key="back_to_form_btn"):
+            _reset_dialogue_state()
+            st.rerun()
 
 
 if __name__ == "__main__":

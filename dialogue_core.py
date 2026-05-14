@@ -143,7 +143,24 @@ DEFAULT_TOPIC = (
     "両者で具体的なサービス内容（誰向け・何ができる・収益モデル）を合意してください。"
 )
 
-MIN_ROUNDS_BEFORE_JUDGE = 2
+MIN_ROUNDS_BEFORE_JUDGE = 5
+
+
+# 各キャラのシステムプロンプト末尾に共通付与される指示。
+# 同じ言い回しや定型句の繰り返しを避け、自然な揺らぎを生むためのもの。
+VARIATION_HINT = """
+
+【表現のバリエーションについて（重要）】
+- 同じ言い回し、同じ書き出し、同じ口癖を毎ターン繰り返さないこと。
+- キャラクター設定で挙げられた例文・サンプルフレーズは「方向性の例」にすぎない。そのまま使い続けず、同じ意図を毎回違う言葉で表現すること。
+- 直前の自分の発言を読み返し、語彙・構文・リアクションが被らないよう意識する。
+- 機械的なテンプレートではなく、人間らしい揺らぎ・余白・間を持って話す。
+"""
+
+
+def _build_system_prompt(persona: dict) -> str:
+    """ペルソナの基本プロンプトに共通の表現バリエーション指示を付与して返す。"""
+    return f"{persona['system']}\n{VARIATION_HINT}"
 
 
 def check_api_availability() -> tuple[bool, str, str]:
@@ -212,7 +229,7 @@ def check_api_availability() -> tuple[bool, str, str]:
 
 
 def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
-    prompt = f"""次の2人の最新発言を読み、両者が同じ1つのサービス案で合意したか判定してください。
+    prompt = f"""次の2人の最新発言を読み、両者が「同一の最終案」で**完全に合意したか**を厳格に判定してください。
 
 【発言A】
 {last_a}
@@ -220,8 +237,19 @@ def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
 【発言B】
 {last_b}
 
-合意の条件: 同じ案を両者が支持し、明確な同意表現（「これでいこう」「進めましょう」「賛成」など）がある。
+【合意 (YES) と判定する条件（すべて満たすこと）】
+- 両者が**同じ具体的な案（誰向け・何ができる・どう価値を出す、まで具体）**を支持している
+- 両者が**明示的な同意ワード**を発している（例：「これでいこう」「合意」「決まり」「進めましょう」「賛成」「異論なし」）
+- 反論・条件・懸念点が**残っていない**
 
+【NO（議論継続）と判定する条件（いずれかに当てはまる）】
+- 片方は賛成だが、もう片方が「ただし」「でも」「ちなみに」など条件付け中
+- 「面白そう」「いいね」「興味深い」など**感想レベル**のみで、明確な同意ワードがない
+- 案がまだ抽象的、具体化されていない
+- 新しいアイデアや改善提案が出ているフェーズ
+- どちらかがまだ問いを投げかけている
+
+迷ったら **NO** と答えてください。
 YES または NO のみで答えてください。"""
     try:
         resp = _safe_call_with_retry(
@@ -350,11 +378,15 @@ def dialogue_events(
         client = genai.Client(api_key=api_key)
         chat_a = client.chats.create(
             model=MODEL,
-            config=types.GenerateContentConfig(system_instruction=persona_a["system"]),
+            config=types.GenerateContentConfig(
+                system_instruction=_build_system_prompt(persona_a)
+            ),
         )
         chat_b = client.chats.create(
             model=MODEL,
-            config=types.GenerateContentConfig(system_instruction=persona_b["system"]),
+            config=types.GenerateContentConfig(
+                system_instruction=_build_system_prompt(persona_b)
+            ),
         )
     except Exception as e:
         yield {"type": "error", "text": f"クライアント初期化失敗: {e}"}
