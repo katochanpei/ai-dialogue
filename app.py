@@ -653,7 +653,7 @@ _SIDEBAR_CSS = """
 
     .ai-giron-title-main {
         font-family: 'Dela Gothic One', sans-serif !important;
-        font-size: 38px !important;
+        font-size: clamp(26px, 5.5vw, 38px) !important;
         color: white !important;
         text-align: center;
         margin: 14px auto 4px auto !important;
@@ -665,7 +665,7 @@ _SIDEBAR_CSS = """
     }
     .ai-giron-title-login {
         font-family: 'Dela Gothic One', sans-serif !important;
-        font-size: 76px !important;
+        font-size: clamp(38px, 9vw, 72px) !important;
         color: white !important;
         text-align: center;
         margin: 18px 0 0px 0 !important;
@@ -787,8 +787,8 @@ def _check_password() -> bool:
     <span style="display: inline-block; transform: scaleX(-1);
                  font-size: clamp(64px, 18vw, 128px); line-height: 0.75;">🗣️</span>
   </div>
-  <!-- 2行目: AI議論! -->
-  <div class="ai-giron-title-login">AI議論!</div>
+  <!-- 2行目: AIたち、どう思う？ -->
+  <div class="ai-giron-title-login">AIたち、どう思う？</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
     AIの雑談、のぞいてみる？
@@ -942,8 +942,8 @@ def _main_form() -> dict:
     <span style="display: inline-block; transform: scaleX(-1);
                  font-size: clamp(48px, 12vw, 72px); line-height: 0.75;">🗣️</span>
   </div>
-  <!-- 2行目: AI議論! -->
-  <div class="ai-giron-title-main">AI議論!</div>
+  <!-- 2行目: AIたち、どう思う？ -->
+  <div class="ai-giron-title-main">AIたち、どう思う？</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
     AIの雑談、のぞいてみる？
@@ -961,7 +961,7 @@ def _main_form() -> dict:
     topic_input = st.text_area(
         "お題",
         value="",
-        placeholder="お題を放り込むと、AIふたりが勝手に雑談しはじめる。空のままでもサンプルで動くで",
+        placeholder="気になること、ちょっと入れてみて\n（空欄でもOK。ランダムでお題出ます）",
         height=160,
         key="topic_input",
         label_visibility="collapsed",
@@ -988,7 +988,7 @@ def _main_form() -> dict:
     _, btn_center, _ = st.columns([1, 4, 1])
     with btn_center:
         start = st.button(
-            "議論スタート！",
+            "ちょっと聞いてみる👂",
             type="primary",
             use_container_width=True,
             disabled=st.session_state.running,
