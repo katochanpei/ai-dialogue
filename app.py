@@ -73,17 +73,18 @@ st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
 def _generate_aurora_palette() -> dict[str, str]:
-    """オーロラ風の4色パレットを生成（各色は半透明）。
+    """パステル系オーロラ4色パレットを生成（明るく華やか）。
 
     色相環からおおむね 90 度ずつ離れた 4 色をランダムに選ぶ。
+    彩度はやや控えめ、明度はかなり高めで「パステル × 明るい」配色。
     """
     hue_start = random.randint(0, 360)
     palette: dict[str, str] = {}
     for i in range(4):
         hue = (hue_start + i * 90 + random.randint(-15, 15)) % 360
-        sat = random.randint(72, 92)
-        light = random.randint(52, 64)
-        alpha = round(random.uniform(0.85, 1.0), 2)
+        sat = random.randint(65, 85)
+        light = random.randint(76, 88)
+        alpha = round(random.uniform(0.92, 1.0), 2)
         palette[f"C{i + 1}"] = f"hsla({hue},{sat}%,{light}%,{alpha})"
     return palette
 
@@ -144,7 +145,7 @@ _SIDEBAR_CSS = """
     }
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[kind="secondary"] {
-        background-color: #1a1a2e !important;
+        background-color: #f8f5ff !important;
         background-image:
             radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
             radial-gradient(at 80% 25%, __AURORA_C2__ 0%, transparent 55%),
@@ -154,10 +155,10 @@ _SIDEBAR_CSS = """
         animation:
             auroraDrift 9s ease-in-out infinite,
             auroraGlow 4s ease-in-out infinite !important;
-        color: #ffffff !important;
-        border: 2px solid rgba(255, 255, 255, 0.35) !important;
+        color: #2d1b4e !important;
+        border: 2px solid rgba(255, 255, 255, 0.6) !important;
         font-weight: 800 !important;
-        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55) !important;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6) !important;
         transition: transform 0.2s ease !important;
     }
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
