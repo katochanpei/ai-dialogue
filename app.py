@@ -115,6 +115,13 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
     }
+    /* お題入力のプレースホルダを薄め＆黒寄りグレーに */
+    section[data-testid="stSidebar"] textarea::placeholder,
+    section[data-testid="stSidebar"] textarea::-webkit-input-placeholder,
+    section[data-testid="stSidebar"] textarea::-moz-placeholder {
+        color: rgba(255, 255, 255, 0.22) !important;
+        opacity: 1 !important;
+    }
     /* 「ランダム議論」ボタン：プリズム色のうねうねアニメーション */
     @keyframes prismFlow {
         0%   { background-position: 0% 50%; }
