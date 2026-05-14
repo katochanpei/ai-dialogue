@@ -108,10 +108,6 @@ _SIDEBAR_CSS = """
     .main .block-container {
         max-width: 820px !important;
         padding-top: 3rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
     }
 
     /* お題テキストエリアは少し内側に絞ってタイトルより狭く見せる */
