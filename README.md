@@ -106,8 +106,32 @@ UI からはサイドバーで過去ログを選んで閲覧、ダウンロー�
 
 ## モデル
 
-`gemini-2.5-flash`（無料枠で十分動く）。
+`gemini-2.0-flash`（無料枠 1500RPD で複数人共有でも余裕）。
 変更は `dialogue_core.py` の `MODEL` 定数。
+
+## Streamlit Cloud にデプロイ（チーム共有）
+
+1. **GitHub リポを Streamlit Cloud に接続**
+   - https://share.streamlit.io にログイン（GitHubアカウントで）
+   - 「New app」→ `katochanpei/ai-dialogue` を選択
+   - Branch: `main` / Main file path: `app.py`
+
+2. **Secrets を設定**
+   - アプリ詳細画面の「Settings」→「Secrets」
+   - 以下を貼り付け（実値に置き換え）:
+     ```toml
+     GEMINI_API_KEY = "AIza..."
+     APP_PASSWORD = "<set-app-password-here>"
+     MULTI_USER_MODE = "true"
+     ```
+   - `MULTI_USER_MODE = "true"` 必須（過去ログがユーザー間で見えるのを防ぐ）
+
+3. **Deploy** をクリック
+   - 数分で `https://<app-name>.streamlit.app` が発行される
+
+4. **同僚に共有**
+   - URL とパスワードを伝える
+   - 同僚は URL 開く → パスワード入力 → 即使える
 
 ## トラブルシューティング
 

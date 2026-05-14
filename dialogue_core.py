@@ -10,6 +10,7 @@ yield する各イベントはdict形式で、'type'フィールドで種別を�
 - {"type": "facilitator", "round": int, "text": str}: 介入
 - {"type": "agreement", "round": int}            : 合意成立
 - {"type": "end", "reason": str, "round": int}   : 上限到達など
+- {"type": "summary", "text": str}               : 結論・アドバイス（Markdown）
 - {"type": "error", "text": str}                 : エラー
 """
 from __future__ import annotations
@@ -26,8 +27,20 @@ from google.genai import types
 
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
-API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-2.0-flash"
+
+
+def _get_api_key() -> str | None:
+    """APIキーを取得（環境変数を実行時に読む）。
+
+    Streamlit Cloud では app.py が st.secrets から os.environ にコピーする。
+    ローカルでは .env から自動ロード済み。
+    """
+    return os.getenv("GEMINI_API_KEY")
+
+
+# 後方互換のため定数も提供（インポート時点の値）
+API_KEY = _get_api_key()
 
 DEFAULT_TOPIC = (
     "2027年にバズりそうな新サービスを1つ考えて、"
@@ -74,6 +87,60 @@ def _call_facilitator(client: genai.Client, transcript: list[str]) -> str:
         return f"（介入失敗: {e}）"
 
 
+def _call_summarizer(
+    client: genai.Client,
+    topic: str,
+    transcript: list[str],
+    agreed: bool,
+) -> str:
+    """議論を要約し、依頼者向けの実用ブリーフィングを生成する。"""
+    history = "\n".join(transcript)
+    state = "両者が合意した" if agreed else "合意に至らなかった（上限到達）"
+    prompt = f"""あなたは議論の要約役 兼 アドバイザーです。
+以下の議論を読んで、依頼者（人間）に向けた実用的なブリーフィングを作成してください。
+
+【お題】
+{topic}
+
+【状態】
+{state}
+
+【議論の全文】
+{history}
+
+【出力ルール】
+- 必ず下記のMarkdown構造で出力（見出し・絵文字もそのまま）
+- 「結論」は具体的に。「誰向け・何ができる・どう価値を出す」が分かる粒度
+- 「やるべきこと」は依頼者が今日・明日に動ける具体アクション
+- 全体700〜1000字、読みやすく
+
+## 🎯 結論
+（合意/到達した内容を2〜4行で具体的に。合意せずなら有力候補と未決事項を整理）
+
+## 🔑 議論で出たキーポイント
+- （重要論点1）
+- （重要論点2）
+- （重要論点3、必要なら4-5個まで）
+
+## 🚀 あなた（依頼者）が今やるべきこと
+1. （最優先の具体アクション）
+2. （次のアクション）
+3. （その次）
+
+## 🤔 さらに考えるべきこと
+- （深掘りすべき問い1）
+- （深掘りすべき問い2）
+
+## ⚠️ 注意点・盲点
+（議論で軽視された懸念や、依頼者が見落としそうなポイント。なければ「特になし」）
+"""
+    try:
+        resp = client.models.generate_content(model=MODEL, contents=prompt)
+        return (resp.text or "").strip()
+    except Exception as e:
+        return f"（要約失敗: {e}）"
+
+
 def _send(chat, message: str) -> str:
     resp = chat.send_message(message)
     return (resp.text or "").strip()
@@ -88,12 +155,13 @@ def dialogue_events(
     delay_sec: float = 2.0,
 ) -> Iterator[dict]:
     """対話イベントを順次yield するジェネレータ。"""
-    if not API_KEY:
-        yield {"type": "error", "text": "GEMINI_API_KEY が .env に設定されていません"}
+    api_key = _get_api_key()
+    if not api_key:
+        yield {"type": "error", "text": "GEMINI_API_KEY が設定されていません（.env または Streamlit secrets）"}
         return
 
     try:
-        client = genai.Client(api_key=API_KEY)
+        client = genai.Client(api_key=api_key)
         chat_a = client.chats.create(
             model=MODEL,
             config=types.GenerateContentConfig(system_instruction=persona_a["system"]),
@@ -151,6 +219,8 @@ def dialogue_events(
 
         if round_num >= MIN_ROUNDS_BEFORE_JUDGE and _call_judge(client, last_a, last_b):
             yield {"type": "agreement", "round": round_num}
+            summary = _call_summarizer(client, topic, transcript, agreed=True)
+            yield {"type": "summary", "text": summary}
             return
 
         if round_num % intervention_interval == 0 and round_num < max_rounds:
@@ -161,20 +231,17 @@ def dialogue_events(
             next_input = last_b
 
     yield {"type": "end", "reason": "max_rounds", "round": max_rounds}
+    summary = _call_summarizer(client, topic, transcript, agreed=False)
+    yield {"type": "summary", "text": summary}
 
 
-def save_log(
+def build_log_markdown(
     events_log: list[dict],
     topic: str,
     persona_a_name: str,
     persona_b_name: str,
-) -> Path:
-    """イベントログを Markdown ファイルに保存。"""
-    log_dir = Path(__file__).resolve().parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    log_path = log_dir / f"{timestamp}_dialogue.md"
-
+) -> str:
+    """イベントログを Markdown 文字列として組み立てる（ディスク書き出しなし）。"""
     lines = [
         "# AI対話ログ",
         "",
@@ -210,11 +277,33 @@ def save_log(
         elif t == "end":
             lines.append(f"## ⏱ 最大往復数 {ev['round']} に到達して終了")
             lines.append("")
+        elif t == "summary":
+            lines.append("---")
+            lines.append("")
+            lines.append("# 📋 結論ブリーフィング")
+            lines.append("")
+            lines.append(ev["text"])
+            lines.append("")
         elif t == "error":
             lines.append("## ❌ エラー")
             lines.append("")
             lines.append(ev["text"])
             lines.append("")
 
-    log_path.write_text("\n".join(lines), encoding="utf-8")
+    return "\n".join(lines)
+
+
+def save_log(
+    events_log: list[dict],
+    topic: str,
+    persona_a_name: str,
+    persona_b_name: str,
+) -> Path:
+    """イベントログを Markdown ファイルとしてディスクに保存。"""
+    content = build_log_markdown(events_log, topic, persona_a_name, persona_b_name)
+    log_dir = Path(__file__).resolve().parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    log_path = log_dir / f"{timestamp}_dialogue.md"
+    log_path.write_text(content, encoding="utf-8")
     return log_path

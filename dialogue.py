@@ -29,6 +29,12 @@ def _print_event(ev: dict) -> None:
         print(f"\n## ✅ 合意成立（{ev['round']}往復）\n")
     elif t == "end":
         print(f"\n## ⏱ 最大往復数 {ev['round']} に到達して終了\n")
+    elif t == "summary":
+        print("\n" + "=" * 60)
+        print("📋 結論ブリーフィング")
+        print("=" * 60 + "\n")
+        print(ev["text"])
+        print()
     elif t == "error":
         print(f"\n❌ {ev['text']}", file=sys.stderr)
 
