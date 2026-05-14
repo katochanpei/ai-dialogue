@@ -421,15 +421,18 @@ _SIDEBAR_CSS = """
         letter-spacing: 0.4px !important;
         text-transform: uppercase !important;
     }
-    /* セレクトボックス本体：Apple search-input 寸法（44px 高 / 12×20 padding / rounded.md = 11px） */
+    /* セレクトボックス本体：Apple search-input 44px 高、flex 縦中央寄せで絵文字混じりでも切れない */
     div[data-testid="stSelectbox"] > div > div,
     div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
         min-height: 44px !important;
         border-radius: 11px !important;
         border: 1px solid #23252a !important;
-        padding: 6px 14px !important;
-        font-size: 17px !important;
-        letter-spacing: -0.374px !important;
+        padding: 10px 14px !important;
+        font-size: 15px !important;
+        letter-spacing: -0.05px !important;
+        line-height: 1.2 !important;
+        display: flex !important;
+        align-items: center !important;
         transition: border-color 0.12s ease !important;
     }
     div[data-testid="stSelectbox"] [data-baseweb="select"]:focus-within > div {
