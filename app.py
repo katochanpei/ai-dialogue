@@ -116,7 +116,7 @@ THREE_BG_HTML = """<!DOCTYPE html>
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0e1a, 0.035);
+  scene.fog = new THREE.FogExp2(0x010102, 0.035);
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 100);
   camera.position.z = 11;
 
@@ -313,7 +313,7 @@ _SIDEBAR_CSS = """
        Streamlit の wrapper div / iframe を viewport いっぱいに広げ、z-index:0 で
        UI コンテンツ（z-index:10 以上）の下に敷く。pointer-events:none で透過。 */
     html, body {
-        background-color: #0a0e1a !important;
+        background-color: #010102 !important;
     }
     /* Streamlit の全レベルの wrapper を透明化して body の色 + iframe が見えるように */
     [data-testid="stApp"],
@@ -397,26 +397,26 @@ _SIDEBAR_CSS = """
         min-height: 160px !important;
         border-radius: 18px !important;
         padding: 17px 22px !important;
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border: 1px solid #23252a !important;
         transition: border-color 0.12s ease !important;
     }
     [data-testid="stTextArea"] textarea:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.7) !important;
+        outline: 2px solid #5e69d1 !important;
         outline-offset: 2px !important;
-        border-color: rgba(255, 255, 255, 0.25) !important;
+        border-color: #34343a !important;
     }
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder {
-        color: rgba(255, 255, 255, 0.30) !important;
+        color: #62666d !important;
         opacity: 1 !important;
-        -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
+        -webkit-text-fill-color: #62666d !important;
     }
 
     /* セレクトボックスのラベル：Linear eyebrow タイポ（13px / 500 / +0.4px LS / uppercase） */
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSelectbox"] label p {
         font-size: 13px !important;
-        color: rgba(255, 255, 255, 0.5) !important;
+        color: #8a8f98 !important;
         font-weight: 500 !important;
         letter-spacing: 0.4px !important;
         text-transform: uppercase !important;
@@ -426,14 +426,14 @@ _SIDEBAR_CSS = """
     div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
         min-height: 44px !important;
         border-radius: 11px !important;
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border: 1px solid #23252a !important;
         padding: 6px 14px !important;
         font-size: 17px !important;
         letter-spacing: -0.374px !important;
         transition: border-color 0.12s ease !important;
     }
     div[data-testid="stSelectbox"] [data-baseweb="select"]:focus-within > div {
-        border-color: rgba(255, 255, 255, 0.25) !important;
+        border-color: #34343a !important;
     }
 
     /* === ボタン共通：Apple body サイズに準拠（17px / -0.374px LS / 11×22 padding / pill） === */
@@ -464,7 +464,7 @@ _SIDEBAR_CSS = """
         transform: scale(0.95) !important;
     }
     div[data-testid="stButton"] button:focus-visible {
-        outline: 2px solid rgba(255, 255, 255, 0.7) !important;
+        outline: 2px solid #5e69d1 !important;
         outline-offset: 3px !important;
     }
 
@@ -485,28 +485,25 @@ _SIDEBAR_CSS = """
         50% {
             box-shadow:
                 0 0 30px rgba(255, 255, 255, 0.45),
-                inset 0 0 22px rgba(255, 255, 255, 0.18);
+                inset 0 0 22px #23252a;
         }
     }
+    /* プライマリ：Apple Sky Link Blue（ダーク面用 #2997ff）単色 */
     div[data-testid="stButton"] button[kind="primary"] {
-        background-color: #f8f5ff !important;
-        background-image:
-            radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
-            radial-gradient(at 80% 25%, __AURORA_C2__ 0%, transparent 55%),
-            radial-gradient(at 75% 80%, __AURORA_C3__ 0%, transparent 55%),
-            radial-gradient(at 25% 80%, __AURORA_C4__ 0%, transparent 55%) !important;
-        background-size: 200% 200% !important;
-        animation:
-            auroraDrift 6s ease-in-out infinite,
-            auroraGlow 2.7s ease-in-out infinite !important;
-        color: #000000 !important;
-        border: 2px solid rgba(255, 255, 255, 0.6) !important;
-        transition: transform 0.2s ease !important;
+        background-color: #2997ff !important;
+        background-image: none !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
+        animation: none !important;
     }
     div[data-testid="stButton"] button[kind="primary"]:hover {
-        animation:
-            auroraDrift 3s ease-in-out infinite,
-            auroraGlow 1.3s ease-in-out infinite !important;
+        background-color: #3aa0ff !important;
+        background-image: none !important;
+        animation: none !important;
+    }
+    div[data-testid="stButton"] button[kind="primary"] p {
+        color: #ffffff !important;
     }
 
     /* 戻るアクション（底部）：薄い枠付き控えめボタン
@@ -518,8 +515,8 @@ _SIDEBAR_CSS = """
         background-image: none !important;
         background-color: transparent !important;
         animation: none !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
-        color: rgba(255, 255, 255, 0.7) !important;
+        border: 1px solid #23252a !important;
+        color: #d0d6e0 !important;
         padding: 8px 14px !important;
         min-height: auto !important;
         font-family: 'Inter', sans-serif !important;
@@ -535,14 +532,14 @@ _SIDEBAR_CSS = """
         + [data-testid="element-container"] button[kind="secondary"] p {
         font-family: 'Inter', sans-serif !important;
         font-size: 14px !important;
-        color: rgba(255, 255, 255, 0.7) !important;
+        color: #d0d6e0 !important;
         letter-spacing: 0 !important;
     }
     body [data-testid="element-container"]:has(.back-action-wrap)
         + [data-testid="element-container"] button[kind="secondary"]:hover {
-        background: rgba(255, 255, 255, 0.06) !important;
+        background: #141516 !important;
         background-image: none !important;
-        border-color: rgba(255, 255, 255, 0.4) !important;
+        border-color: #34343a !important;
         animation: none !important;
         transform: none !important;
     }
@@ -550,7 +547,7 @@ _SIDEBAR_CSS = """
     /* トップ左の戻るリンク：純粋な <a> タグ。button 要素ではないので
        Streamlit のボタンスタイルと一切競合しない */
     a.back-top-link {
-        color: rgba(255, 255, 255, 0.5) !important;
+        color: #8a8f98 !important;
         font-size: 16px !important;
         font-family: 'Inter', sans-serif !important;
         font-weight: 400 !important;
@@ -559,31 +556,32 @@ _SIDEBAR_CSS = """
         padding: 4px 8px;
     }
     a.back-top-link:hover {
-        color: rgba(255, 255, 255, 0.85) !important;
+        color: #d0d6e0 !important;
         text-decoration: none !important;
     }
 
-    /* === セカンダリボタン（ランダム議論）：単色インディゴ、アニメ無し === */
+    /* === セカンダリボタン：Linear button-secondary（surface-1 + hairline） === */
     div[data-testid="stButton"] button[kind="secondary"] {
-        background: #6366f1 !important;
+        background: #0f1011 !important;
         background-image: none !important;
-        color: #ffffff !important;
-        border: none !important;
+        color: #f7f8f8 !important;
+        border: 1px solid #23252a !important;
         box-shadow: none !important;
         animation: none !important;
-        transition: background-color 0.15s ease, transform 0.15s ease !important;
+        transition: background-color 0.12s ease, border-color 0.12s ease !important;
     }
     div[data-testid="stButton"] button[kind="secondary"] p {
-        color: #ffffff !important;
+        color: #f7f8f8 !important;
     }
     div[data-testid="stButton"] button[kind="secondary"]:hover {
-        background: #7c7af2 !important;
+        background: #141516 !important;
         background-image: none !important;
+        border-color: #34343a !important;
     }
 
     /* === エクスパンダー：Linear rounded.lg (12px) + spacing.md (16px) + body LS (-0.05) === */
     [data-testid="stExpander"] {
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border: 1px solid #23252a !important;
         border-radius: 12px !important;
         background: transparent !important;
         overflow: hidden !important;
@@ -702,7 +700,7 @@ _inject_three_bg()
 
 
 HELP_MARKDOWN = """
-<div style="font-size: 0.86rem; color: rgba(255,255,255,0.65); line-height: 1.7;">
+<div style="font-size: 0.86rem; color: #d0d6e0; line-height: 1.7;">
 
 **🎯 何ができるか**
 
@@ -735,7 +733,7 @@ HELP_MARKDOWN = """
 - 1議論あたり: 10〜20リクエスト消費
 - 上限を超えるとその日は使用できません（翌朝復活）
 - UI: Streamlit / ホスティング: Streamlit Community Cloud
-- ソース: <a href="https://github.com/katochanpei/ai-dialogue" style="color: rgba(255,255,255,0.8);">github.com/katochanpei/ai-dialogue</a>
+- ソース: <a href="https://github.com/katochanpei/ai-dialogue" style="color: #5e6ad2;">github.com/katochanpei/ai-dialogue</a>
 
 </div>
 """
@@ -793,7 +791,7 @@ def _check_password() -> bool:
   <!-- 2行目: AI議論! -->
   <div class="ai-giron-title-login">AI議論!</div>
   <!-- サブタイトル -->
-  <p style="color: rgba(255,255,255,0.55); font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
+  <p style="color: #8a8f98; font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
     Gemini × Gemini 議論ツール
   </p>
 </div>
@@ -900,21 +898,20 @@ def _render_event(ev: dict, container) -> None:
                     st.markdown(
                         f"""
 <div style="
-    background: linear-gradient(135deg,
-        rgba(59, 130, 246, 0.16) 0%,
-        rgba(30, 64, 175, 0.22) 100%);
+    background: #0f1011;
     padding: 22px 26px;
-    border-left: 5px solid #3b82f6;
-    border-radius: 10px;
+    border: 1px solid #23252a;
+    border-left: 4px solid #2997ff;
+    border-radius: 12px;
     margin-bottom: 26px;
 ">
-  <div style="font-size: 0.78rem; color: #93c5fd; font-weight: 700;
+  <div style="font-size: 0.78rem; color: #8a8f98; font-weight: 500;
               letter-spacing: 0.18em; margin-bottom: 10px;
               text-transform: uppercase;">
     📋 お題
   </div>
   <div style="font-size: 1.65rem; font-weight: 700; line-height: 1.55;
-              color: #ffffff; letter-spacing: 0.01em;">
+              color: #f7f8f8; letter-spacing: -0.6px;">
     {html.escape(ev["topic"])}
   </div>
 </div>
@@ -948,7 +945,7 @@ def _main_form() -> dict:
   <!-- 2行目: AI議論! -->
   <div class="ai-giron-title-main">AI議論!</div>
   <!-- サブタイトル -->
-  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
+  <p style="color: #8a8f98; font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
     Gemini × Gemini 議論ツール
   </p>
 </div>
@@ -1100,18 +1097,19 @@ def _run_dialogue(cfg: dict) -> None:
     st.markdown(
         f"""
 <div style="
-    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    background: #0f1011;
     padding: 26px 32px;
-    border-radius: 14px;
+    border-radius: 12px;
     margin: 14px 0 22px 0;
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    border: 1px solid #23252a;
+    border-left: 4px solid #2997ff;
 ">
-  <div style="color: #bfdbfe; font-size: 0.78rem; font-weight: 700;
+  <div style="color: #8a8f98; font-size: 0.78rem; font-weight: 500;
               letter-spacing: 0.18em; margin-bottom: 12px; text-transform: uppercase;">
     📋 お 題
   </div>
-  <div style="color: #ffffff; font-size: 1.45rem; font-weight: 600;
-              line-height: 1.55;">
+  <div style="color: #f7f8f8; font-size: 1.45rem; font-weight: 600;
+              line-height: 1.55; letter-spacing: -0.4px;">
     {html.escape(cfg["topic"])}
   </div>
 </div>
