@@ -384,16 +384,26 @@ _SIDEBAR_CSS = """
         margin-right: auto !important;
     }
 
-    /* お題テキストエリアは少し内側に絞ってタイトルより狭く見せる */
+    /* お題テキストエリア：Apple body 準拠（17px / -0.374px LS / 1.47 LH）+ rounded.lg + Apple md padding */
     div[data-testid="stTextArea"] {
         max-width: 660px !important;
         margin-left: auto !important;
         margin-right: auto !important;
     }
     [data-testid="stTextArea"] textarea {
-        font-size: 1.05rem !important;
-        line-height: 1.55 !important;
+        font-size: 17px !important;
+        line-height: 1.47 !important;
+        letter-spacing: -0.374px !important;
         min-height: 160px !important;
+        border-radius: 18px !important;
+        padding: 17px 22px !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        transition: border-color 0.12s ease !important;
+    }
+    [data-testid="stTextArea"] textarea:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.7) !important;
+        outline-offset: 2px !important;
+        border-color: rgba(255, 255, 255, 0.25) !important;
     }
     .stApp textarea::placeholder,
     div[data-testid="stTextArea"] textarea::placeholder {
@@ -402,34 +412,59 @@ _SIDEBAR_CSS = """
         -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
 
-    /* セレクトボックスのラベル：控えめに */
+    /* セレクトボックスのラベル：Apple fine-print 12px に近づける */
     div[data-testid="stSelectbox"] label,
     div[data-testid="stSelectbox"] label p {
-        font-size: 11px !important;
+        font-size: 12px !important;
         color: rgba(255, 255, 255, 0.5) !important;
         font-weight: 500 !important;
+        letter-spacing: -0.12px !important;
+    }
+    /* セレクトボックス本体：Apple search-input 寸法（44px 高 / 12×20 padding / rounded.md = 11px） */
+    div[data-testid="stSelectbox"] > div > div,
+    div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
+        min-height: 44px !important;
+        border-radius: 11px !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        padding: 6px 14px !important;
+        font-size: 17px !important;
+        letter-spacing: -0.374px !important;
+        transition: border-color 0.12s ease !important;
+    }
+    div[data-testid="stSelectbox"] [data-baseweb="select"]:focus-within > div {
+        border-color: rgba(255, 255, 255, 0.25) !important;
     }
 
-    /* === ボタン共通：ピル型、常識的なサイズの普通フォント === */
+    /* === ボタン共通：Apple body サイズに準拠（17px / -0.374px LS / 11×22 padding / pill） === */
     div[data-testid="stButton"] button {
-        border-radius: 999px !important;
-        padding: 10px 20px !important;
+        border-radius: 9999px !important;
+        padding: 11px 22px !important;
         font-family: 'Inter', 'Helvetica Neue', sans-serif !important;
-        font-size: 16px !important;
+        font-size: 17px !important;
         font-weight: 600 !important;
-        letter-spacing: 0 !important;
+        letter-spacing: -0.374px !important;
         white-space: nowrap !important;
-        line-height: 1.4 !important;
+        line-height: 1.47 !important;
         min-height: auto !important;
         justify-content: center !important;
         text-align: center !important;
+        transition: transform 0.12s ease !important;
     }
     div[data-testid="stButton"] button p {
         font-family: 'Inter', 'Helvetica Neue', sans-serif !important;
-        font-size: 16px !important;
+        font-size: 17px !important;
         font-weight: 600 !important;
+        letter-spacing: -0.374px !important;
         white-space: nowrap !important;
         text-align: center !important;
+    }
+    /* Apple 共通: active で scale(0.95)、focus で 2px outline */
+    div[data-testid="stButton"] button:active {
+        transform: scale(0.95) !important;
+    }
+    div[data-testid="stButton"] button:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.7) !important;
+        outline-offset: 3px !important;
     }
 
     /* プライマリボタン（議論スタート）：オーロラ */
@@ -471,7 +506,6 @@ _SIDEBAR_CSS = """
         animation:
             auroraDrift 3s ease-in-out infinite,
             auroraGlow 1.3s ease-in-out infinite !important;
-        transform: translateY(-1px) scale(1.02) !important;
     }
 
     /* 戻るアクション（底部）：薄い枠付き控えめボタン
@@ -542,13 +576,12 @@ _SIDEBAR_CSS = """
     div[data-testid="stButton"] button[kind="secondary"]:hover {
         background: #7c7af2 !important;
         background-image: none !important;
-        transform: translateY(-1px) scale(1.02) !important;
     }
 
-    /* === エクスパンダー：薄い枠線つき、角丸 === */
+    /* === エクスパンダー：Apple rounded.md (11px) と caption (14px / -0.224px LS) === */
     [data-testid="stExpander"] {
         border: 1px solid rgba(255, 255, 255, 0.10) !important;
-        border-radius: 8px !important;
+        border-radius: 11px !important;
         background: transparent !important;
         overflow: hidden !important;
     }
@@ -557,12 +590,14 @@ _SIDEBAR_CSS = """
         background: transparent !important;
     }
     [data-testid="stExpander"] details > summary {
-        padding: 10px 16px !important;
-        font-size: 13px !important;
+        padding: 12px 17px !important;
+        font-size: 14px !important;
+        letter-spacing: -0.224px !important;
         border: none !important;
     }
     [data-testid="stExpander"] details > summary p {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        letter-spacing: -0.224px !important;
     }
 
     /* ボタン間スペーサ（PC基準値、スマホで縮める） */
@@ -945,7 +980,7 @@ def _main_form() -> dict:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
     # ─── キャラ → ボタン間の余白 ───
-    st.markdown('<div style="height: 36px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
 
         # ボタン群（縦並び・中央寄せ）
     _, btn_center, _ = st.columns([1, 4, 1])
@@ -958,7 +993,7 @@ def _main_form() -> dict:
         )
 
     # === セクション間スペース（フォーム → 折りたたみ） ===
-    st.markdown('<div style="height: 64px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
 
     # === セクション3: 折りたたみ要素（詳細パラメータ／ヘルプ） ===
     st.markdown(
