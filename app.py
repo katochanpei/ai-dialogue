@@ -95,35 +95,35 @@ if "aurora_palette" not in st.session_state:
 _AURORA = st.session_state["aurora_palette"]
 
 
-# === Sidebar styling: 幅を広げ、フォントを小さく ===
+# === Main UI styling: サイドバー非表示、中央寄せフォーム ===
 _SIDEBAR_CSS = """
 <style>
-    section[data-testid="stSidebar"] {
-        min-width: 340px !important;
-        width: 340px !important;
+    /* サイドバー全部非表示（主役は中央のお題入力） */
+    section[data-testid="stSidebar"] { display: none !important; }
+    [data-testid="collapsedControl"] { display: none !important; }
+
+    /* メインを中央 720px に絞ってフォーム的に */
+    [data-testid="stMainBlockContainer"],
+    .main .block-container {
+        max-width: 720px !important;
+        padding-top: 2.5rem !important;
     }
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
-    section[data-testid="stSidebar"] .stSelectbox div[role="combobox"] {
-        font-size: 0.82rem !important;
-        line-height: 1.35 !important;
+
+    /* お題テキストエリアを大きく目立たせる */
+    [data-testid="stTextArea"] textarea {
+        font-size: 1.05rem !important;
+        line-height: 1.55 !important;
     }
-    section[data-testid="stSidebar"] h1 { font-size: 1.25rem !important; }
-    section[data-testid="stSidebar"] h2 { font-size: 1.0rem !important; }
-    section[data-testid="stSidebar"] h3 { font-size: 0.9rem !important; }
-    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
-        font-size: 0.72rem !important;
-    }
-    /* お題入力のプレースホルダ */
+
+    /* プレースホルダの色（控えめグレー） */
     .stApp textarea::placeholder,
-    div[data-testid="stTextArea"] textarea::placeholder,
-    section[data-testid="stSidebar"] textarea::placeholder,
-    section[data-testid="stSidebar"] textarea::-webkit-input-placeholder {
+    div[data-testid="stTextArea"] textarea::placeholder {
         color: rgba(255, 255, 255, 0.30) !important;
         opacity: 1 !important;
         -webkit-text-fill-color: rgba(255, 255, 255, 0.30) !important;
     }
-    /* 「ランダム議論」ボタン：オーロラ風（4つのラジアルグラデが液体的に動く） */
+
+    /* 「ランダム議論」ボタン：オーロラ風（パステル × うねうね） */
     @keyframes auroraDrift {
         0%   { background-position:   0%   0%; }
         25%  { background-position: 100%   0%; }
@@ -143,8 +143,7 @@ _SIDEBAR_CSS = """
                 inset 0 0 22px rgba(255, 255, 255, 0.18);
         }
     }
-    section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"],
-    section[data-testid="stSidebar"] button[kind="secondary"] {
+    div[data-testid="stButton"] button[kind="secondary"] {
         background-color: #f8f5ff !important;
         background-image:
             radial-gradient(at 20% 20%, __AURORA_C1__ 0%, transparent 55%),
@@ -161,8 +160,7 @@ _SIDEBAR_CSS = """
         text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6) !important;
         transition: transform 0.2s ease !important;
     }
-    section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
-    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+    div[data-testid="stButton"] button[kind="secondary"]:hover {
         animation:
             auroraDrift 3s ease-in-out infinite,
             auroraGlow 1.3s ease-in-out infinite !important;
@@ -174,14 +172,6 @@ _aurora_css = _SIDEBAR_CSS
 for _k, _v in _AURORA.items():
     _aurora_css = _aurora_css.replace(f"__AURORA_{_k}__", _v)
 st.markdown(_aurora_css, unsafe_allow_html=True)
-
-
-def _render_warning_banner() -> None:
-    """常時表示の注意書き（小さめ）。"""
-    st.caption(
-        "⚠️ お題・会話内容は Google の Gemini API に送信されます。"
-        "**社内秘・個人情報・顧客データは入力しないでください。**"
-    )
 
 
 HELP_MARKDOWN = """
@@ -400,40 +390,51 @@ def _list_past_logs() -> list[Path]:
     return sorted(log_dir.glob("*_dialogue.md"), reverse=True)
 
 
-def _sidebar() -> dict:
-    with st.sidebar:
-        st.title("🎙 AI議論")
-        st.caption("Gemini × Gemini 自律対話")
+def _main_form() -> dict:
+    """中央寄せの ChatGPT 風メインフォーム。お題が主役。"""
+    # === タイトル（控えめ） ===
+    st.markdown(
+        """
+<div style="text-align: center; margin-bottom: 28px;">
+  <div style="font-size: 2rem; line-height: 1;">🎙</div>
+  <h1 style="margin: 8px 0 4px 0; font-size: 1.4rem; font-weight: 700;">AI議論</h1>
+  <p style="color: rgba(255,255,255,0.55); font-size: 0.82rem; margin: 0;">
+    Gemini同士が自律的に議論して結論を出すツール
+  </p>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
 
-        st.subheader("お題")
-        topic_input = st.text_area(
-            "お題",
-            value="",
-            placeholder=DEFAULT_TOPIC,
-            label_visibility="collapsed",
-            height=110,
-            key="topic_input",
-            help="空のまま「議論スタート」を押すと、表示中のお題例で開始します",
-        )
-        # 入力が空ならプレースホルダの内容で議論を開始
-        topic = topic_input.strip() or DEFAULT_TOPIC
+    # === お題（主役、大きく） ===
+    topic_input = st.text_area(
+        "お題",
+        value="",
+        placeholder=DEFAULT_TOPIC,
+        height=130,
+        key="topic_input",
+        label_visibility="collapsed",
+        help="議論したいテーマを入力。空のままでもプレースホルダ例で開始できます。",
+    )
+    topic = topic_input.strip() or DEFAULT_TOPIC
 
-        st.subheader("キャラ設定")
+    # === キャラA / B 横並び ===
+    col_a, col_b = st.columns(2)
+    with col_a:
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
-        st.markdown("---")
+    with col_b:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
-        with st.expander("詳細パラメータ", expanded=False):
-            max_rounds = st.slider("最大往復", 1, 30, 20)
-            interval = st.slider("介入間隔", 1, 10, 3)
-            delay = st.slider("遅延(秒)", 0.0, 5.0, 2.0, 0.5)
-
+    # === ボタン群（大きいスタート + サブのランダム） ===
+    btn_col_main, btn_col_sub = st.columns([2, 1])
+    with btn_col_main:
         start = st.button(
             "▶️ 議論スタート",
             type="primary",
             use_container_width=True,
             disabled=st.session_state.running,
         )
+    with btn_col_sub:
         random_start = st.button(
             "🎲 ランダム議論！",
             type="secondary",
@@ -442,9 +443,14 @@ def _sidebar() -> dict:
             help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
         )
 
-        if not _is_multi_user_mode():
-            st.markdown("---")
-            st.subheader("📜 過去ログ")
+    # === 折りたたみ系（控えめにページ下部に） ===
+    with st.expander("⚙️ 詳細パラメータ", expanded=False):
+        max_rounds = st.slider("最大往復", 1, 30, 20)
+        interval = st.slider("ファシリテーター介入間隔", 1, 10, 3)
+        delay = st.slider("発言間スリープ (秒)", 0.0, 5.0, 2.0, 0.5)
+
+    if not _is_multi_user_mode():
+        with st.expander("📜 過去ログ", expanded=False):
             log_files = _list_past_logs()
             if log_files:
                 log_labels = ["（選択してください）"] + [p.stem for p in log_files]
@@ -459,19 +465,19 @@ def _sidebar() -> dict:
                     st.session_state.viewing_log = None
             else:
                 st.caption("まだログがありません")
-        st.markdown("---")
-        _render_help_panel(expanded=False)
 
-        return {
-            "topic": topic,
-            "persona_a": persona_a,
-            "persona_b": persona_b,
-            "max_rounds": max_rounds,
-            "interval": interval,
-            "delay": delay,
-            "start": start,
-            "random_start": random_start,
-        }
+    _render_help_panel(expanded=False)
+
+    return {
+        "topic": topic,
+        "persona_a": persona_a,
+        "persona_b": persona_b,
+        "max_rounds": max_rounds,
+        "interval": interval,
+        "delay": delay,
+        "start": start,
+        "random_start": random_start,
+    }
 
 
 def _render_past_log(log_path: Path) -> None:
@@ -480,36 +486,6 @@ def _render_past_log(log_path: Path) -> None:
     if st.button("← 閉じる"):
         st.session_state.viewing_log = None
         st.rerun()
-
-
-def _render_intro() -> None:
-    st.title("🎙 AI議論")
-    st.caption("Gemini同士が自律的に議論して結論を出すツール")
-
-    st.markdown(
-        """
-<div style="padding: 22px 26px; margin: 18px 0; border-radius: 12px;
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            border-left: 6px solid #2563eb;">
-  <div style="font-weight: 700; font-size: 1.05rem; color: #1e3a8a; margin-bottom: 12px;">
-    👇 使い方（3ステップ）
-  </div>
-  <ol style="margin: 0; padding-left: 22px; color: #1e40af; line-height: 1.9;">
-    <li>左サイドバーの <strong>「お題」</strong> に話したい議題を入力</li>
-    <li>必要であれば <strong>「キャラ A・B」</strong> を選択（デフォルトのままでもOK）</li>
-    <li><strong>▶️ 議論スタート</strong> をクリック</li>
-  </ol>
-  <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #93c5fd;
-              color: #1e40af; font-size: 0.9rem;">
-    🎲 何でも良いから試したい時は、サイドバー下部の <strong>「ランダム議論！」</strong> ボタンが便利です。
-  </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown("---")
-    _render_help_panel(expanded=False)
 
 
 def _randomize_cfg(cfg: dict) -> dict:
@@ -685,39 +661,26 @@ def main() -> None:
     if not _check_password():
         return
     _init_state()
-    cfg = _sidebar()
 
     if st.session_state.viewing_log:
         _render_past_log(st.session_state.viewing_log)
-    elif cfg["start"] or cfg["random_start"]:
+        return
+
+    cfg = _main_form()
+
+    if cfg["start"] or cfg["random_start"]:
         if cfg["random_start"]:
             cfg = _randomize_cfg(cfg)
-            st.info(
-                "🎲 ランダムモード: お題・キャラ・パラメータを抽選しました。"
-            )
+            st.info("🎲 ランダムモード: お題・キャラ・パラメータを抽選しました。")
         with st.spinner("Gemini API の利用可否を確認しています..."):
             ok, message, code = check_api_availability()
         if not ok:
-            st.title("🎙 AI議論")
             st.error("❌ Gemini API が現在利用できません。議論を開始できません。")
             st.markdown(f"**理由:**\n\n{message}")
             with st.expander("エラーコード（詳細）"):
                 st.code(code)
             return
         _run_dialogue(cfg)
-    elif st.session_state.last_log_md:
-        st.title("🎙 AI議論")
-        st.success(f"前回のログ: {st.session_state.last_log_name}")
-        st.download_button(
-            "📥 前回のログをダウンロード",
-            data=st.session_state.last_log_md.encode("utf-8"),
-            file_name=st.session_state.last_log_name,
-            mime="text/markdown",
-        )
-        st.markdown("---")
-        st.markdown("左サイドバーで設定を変えて、もう一度議論を開始できる。")
-    else:
-        _render_intro()
 
 
 if __name__ == "__main__":
