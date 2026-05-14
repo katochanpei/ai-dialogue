@@ -1308,10 +1308,10 @@ def main() -> None:
 
         cfg = _resolve_random_personas(cfg)
 
-        with st.spinner("Gemini API の利用可否を確認しています..."):
+        with st.spinner("AIたちの調子、見てる..."):
             ok, message, code = check_api_availability()
         if not ok:
-            st.error("❌ Gemini API が現在利用できません。議論を開始できません。")
+            st.error("❌ AIたちが今ちょっと忙しいみたい。今は話せへんって。")
             st.markdown(f"**理由:**\n\n{message}")
             with st.expander("エラーコード（詳細）"):
                 st.code(code)
