@@ -153,8 +153,8 @@ _SIDEBAR_CSS = """
             radial-gradient(at 25% 80%, __AURORA_C4__ 0%, transparent 55%) !important;
         background-size: 200% 200% !important;
         animation:
-            auroraDrift 9s ease-in-out infinite,
-            auroraGlow 4s ease-in-out infinite !important;
+            auroraDrift 6s ease-in-out infinite,
+            auroraGlow 2.7s ease-in-out infinite !important;
         color: #2d1b4e !important;
         border: 2px solid rgba(255, 255, 255, 0.6) !important;
         font-weight: 800 !important;
@@ -164,8 +164,8 @@ _SIDEBAR_CSS = """
     section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover,
     section[data-testid="stSidebar"] button[kind="secondary"]:hover {
         animation:
-            auroraDrift 4.5s ease-in-out infinite,
-            auroraGlow 2s ease-in-out infinite !important;
+            auroraDrift 3s ease-in-out infinite,
+            auroraGlow 1.3s ease-in-out infinite !important;
         transform: translateY(-1px) scale(1.02) !important;
     }
 </style>
