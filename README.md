@@ -1,4 +1,4 @@
-# AI Dialogue (Gemini × Gemini)
+# AI議論 (Gemini × Gemini)
 
 Gemini を2役で動かして、勝手に議論させる自律対話システム。
 3人目の Gemini がファシリテーター（論点整理＆合意判定）を担当。

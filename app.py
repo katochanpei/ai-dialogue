@@ -6,9 +6,34 @@ Run:
 from __future__ import annotations
 
 import os
+import random
 from pathlib import Path
 
 import streamlit as st
+
+
+RANDOM_TOPICS = [
+    "来年バズりそうな新サービスを1つ考えて、両者で具体案として合意してください。",
+    "リモートワークと出社、これからの最適なバランスは何か。",
+    "AIに任せていい仕事と、人間がやり続けるべき仕事の境界線は。",
+    "副業で月10万円稼ぐ最も現実的な方法は。",
+    "中小企業の採用力を3倍にするための1つの施策を決めてください。",
+    "10年後も生き残る職業を3つに絞ってください。",
+    "Z世代が本当に求めている福利厚生は何か、1つに絞って提案してください。",
+    "通勤時間をビジネスチャンスに変える新サービスを1つ考えてください。",
+    "ペット業界で今後伸びるサービスを1つ提案してください。",
+    "シニア向けに本当に売れる新商品とは何かを決めてください。",
+    "コンビニで売れる新カテゴリの商品を1つ提案してください。",
+    "外食産業の人手不足を解決する画期的なアイデアを1つ決めてください。",
+    "オンライン会議をもっと楽しくする工夫を1つ提案してください。",
+    "若手社員のモチベーションを上げる最強の仕掛けを1つ決めてください。",
+    "電気代を半分にする新しい家電のアイデアを1つ考えてください。",
+    "もしオフィスを廃止するなら、代わりに何を作るべきか。",
+    "30秒で人を笑わせる動画コンテンツの企画を1つ。",
+    "新しい朝活ビジネスのアイデアを1つ提案してください。",
+    "サブスクリプションが向くサービスと向かないサービスの境界線は。",
+    "地方都市の人口減少を逆手に取った新ビジネスを1つ。",
+]
 
 
 def _bootstrap_secrets() -> None:
@@ -44,7 +69,7 @@ from dialogue_core import (  # noqa: E402
 from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS  # noqa: E402
 
 
-st.set_page_config(page_title="AI Dialogue", page_icon="🎙", layout="wide")
+st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
 # === Sidebar styling: 幅を広げ、フォントを小さく ===
@@ -66,6 +91,20 @@ st.markdown(
     section[data-testid="stSidebar"] h3 { font-size: 0.9rem !important; }
     section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] {
         font-size: 0.72rem !important;
+    }
+    /* ネオングリーンの「ランダム議論」ボタン（サイドバー内のsecondaryボタン全般を対象） */
+    section[data-testid="stSidebar"] button[kind="secondary"] {
+        background: linear-gradient(135deg, #39ff14, #00e676) !important;
+        color: #000 !important;
+        border: 2px solid #00c853 !important;
+        font-weight: 700 !important;
+        box-shadow: 0 0 10px rgba(57, 255, 20, 0.6) !important;
+        transition: all 0.2s ease !important;
+    }
+    section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+        background: linear-gradient(135deg, #00e676, #39ff14) !important;
+        box-shadow: 0 0 16px rgba(57, 255, 20, 0.9) !important;
+        transform: translateY(-1px) !important;
     }
 </style>
 """,
@@ -152,7 +191,7 @@ def _check_password() -> bool:
     if st.session_state.get("authenticated"):
         return True
 
-    st.title("🎙 AI Dialogue")
+    st.title("🎙 AI議論")
     st.caption("社内向け Gemini × Gemini 議論ツール")
     pw = st.text_input("パスワード", type="password", key="_pw_input")
     if st.button("ログイン", type="primary"):
@@ -251,7 +290,7 @@ def _list_past_logs() -> list[Path]:
 
 def _sidebar() -> dict:
     with st.sidebar:
-        st.title("🎙 AI Dialogue")
+        st.title("🎙 AI議論")
         st.caption("Gemini × Gemini 自律対話")
 
         st.subheader("お題")
@@ -279,6 +318,13 @@ def _sidebar() -> dict:
             use_container_width=True,
             disabled=st.session_state.running,
         )
+        random_start = st.button(
+            "🎲 ランダム議論！",
+            type="secondary",
+            use_container_width=True,
+            disabled=st.session_state.running,
+            help="お題・キャラ・パラメータを全てランダムに決めて議論を開始します",
+        )
 
         is_admin = st.session_state.get("is_admin", False)
         show_past_logs = is_admin or not _is_multi_user_mode()
@@ -302,13 +348,6 @@ def _sidebar() -> dict:
                     st.session_state.viewing_log = None
             else:
                 st.caption("まだログがありません")
-        else:
-            st.markdown("---")
-            st.caption(
-                "🔒 共有モード: 過去ログの一覧表示は無効です。"
-                "ダウンロードは議論直後のみ可能。"
-            )
-
         st.markdown("---")
         _render_help_panel(expanded=False)
 
@@ -320,6 +359,7 @@ def _sidebar() -> dict:
             "interval": interval,
             "delay": delay,
             "start": start,
+            "random_start": random_start,
         }
 
 
@@ -332,7 +372,7 @@ def _render_past_log(log_path: Path) -> None:
 
 
 def _render_intro() -> None:
-    st.title("🎙 AI Dialogue")
+    st.title("🎙 AI議論")
     st.markdown(
         """
 左のサイドバーでお題とキャラA/Bを選んで、**▶️ 議論スタート** を押してください。
@@ -356,12 +396,32 @@ def _render_intro() -> None:
     _render_help_panel(expanded=False)
 
 
+def _randomize_cfg(cfg: dict) -> dict:
+    """お題・キャラ・パラメータを全てランダムに上書きする。"""
+    keys_no_custom = [k for k in PERSONAS.keys() if k != CUSTOM_KEY]
+    a_key, b_key = random.sample(keys_no_custom, 2)
+    return {
+        **cfg,
+        "topic": random.choice(RANDOM_TOPICS),
+        "persona_a": PERSONAS[a_key],
+        "persona_b": PERSONAS[b_key],
+        "max_rounds": random.randint(5, 10),
+        "interval": random.randint(2, 4),
+        "delay": round(random.uniform(1.0, 2.5), 1),
+    }
+
+
 def _run_dialogue(cfg: dict) -> None:
     st.session_state.running = True
     st.subheader("お題")
     st.info(cfg["topic"])
     st.subheader(
         f"対決: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
+    )
+    st.caption(
+        f"⚙️ 最大 {cfg['max_rounds']} 往復 / "
+        f"{cfg['interval']} 往復ごとにファシリテーター介入 / "
+        f"発言間 {cfg['delay']} 秒"
     )
 
     chat_container = st.container()
@@ -402,11 +462,18 @@ def _run_dialogue(cfg: dict) -> None:
         st.session_state.last_log_name = log_path.name
         st.session_state.running = False
 
+    st.markdown("---")
+    st.subheader("📥 議論ログのダウンロード")
     st.download_button(
-        "📥 ログをダウンロード",
+        "議論ログをダウンロード",
         data=log_md.encode("utf-8"),
         file_name=log_path.name,
         mime="text/markdown",
+        type="primary",
+    )
+    st.caption(
+        "議論内容は他のユーザーから閲覧できません。"
+        "必要であれば、いま このタイミングでダウンロードしてください。"
     )
 
 
@@ -419,11 +486,16 @@ def main() -> None:
 
     if st.session_state.viewing_log:
         _render_past_log(st.session_state.viewing_log)
-    elif cfg["start"]:
+    elif cfg["start"] or cfg["random_start"]:
+        if cfg["random_start"]:
+            cfg = _randomize_cfg(cfg)
+            st.info(
+                "🎲 ランダムモード: お題・キャラ・パラメータを抽選しました。"
+            )
         with st.spinner("Gemini API の利用可否を確認しています..."):
             ok, message, code = check_api_availability()
         if not ok:
-            st.title("🎙 AI Dialogue")
+            st.title("🎙 AI議論")
             st.error("❌ Gemini API が現在利用できません。議論を開始できません。")
             st.markdown(f"**理由:**\n\n{message}")
             with st.expander("エラーコード（詳細）"):
@@ -431,7 +503,7 @@ def main() -> None:
             return
         _run_dialogue(cfg)
     elif st.session_state.last_log_md:
-        st.title("🎙 AI Dialogue")
+        st.title("🎙 AI議論")
         st.success(f"前回のログ: {st.session_state.last_log_name}")
         st.download_button(
             "📥 前回のログをダウンロード",
