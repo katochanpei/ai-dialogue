@@ -72,28 +72,18 @@ from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS  # noqa:
 st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
 
 
-def _generate_prism_colors() -> str:
-    """ランダムなプリズム色グラデーション文字列を生成。
-
-    色相環を7等分し、開始位置と各色の彩度・明度をランダム化することで
-    毎セッション異なる「美しい」虹色を作る。最後に最初の色を繰り返して
-    アニメーションがループしても自然に繋がるようにする。
-    """
-    hue_start = random.randint(0, 360)
-    n = 7
-    parts = []
-    for i in range(n):
-        hue = (hue_start + i * (360 // n)) % 360
-        sat = random.randint(82, 95)
-        light = random.randint(58, 68)
-        parts.append(f"hsl({hue},{sat}%,{light}%)")
-    return ", ".join(parts + [parts[0]])
-
-
-# セッション中は色を固定（ボタンが安定して見える）。新しいセッションで色変わる。
-if "prism_colors" not in st.session_state:
-    st.session_state["prism_colors"] = _generate_prism_colors()
-_PRISM = st.session_state["prism_colors"]
+# 固定のプリズム配色（手作業で調整した「ちゃんと綺麗」な虹）
+# ピンク→紫→青→ティール→グリーン→ゴールド→レッドオレンジ→（ループ）
+_PRISM = (
+    "hsl(330, 85%, 65%), "
+    "hsl(280, 80%, 65%), "
+    "hsl(220, 85%, 65%), "
+    "hsl(165, 75%, 55%), "
+    "hsl(100, 70%, 60%), "
+    "hsl(45, 90%, 60%), "
+    "hsl(15, 90%, 60%), "
+    "hsl(330, 85%, 65%)"  # loop back
+)
 
 
 # === Sidebar styling: 幅を広げ、フォントを小さく ===
