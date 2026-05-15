@@ -2097,52 +2097,62 @@ PERSONA_QUIRKS: dict[str, str] = {
 }
 
 
-# === ドロップダウン表示順・カテゴリ区切り ===
-# 標準的なキャラ → 濃いキャラのグラデーション順。
-# `SEP_*` キーは区切り行用の特殊キーで、ドロップダウンに表示はするが選択不可。
-# クリックされた場合は app.py 側でデフォルトキーへ強制リバート。
-
-SEP_STANDARD = "__sep_standard__"
-SEP_PROFESSION = "__sep_profession__"
-SEP_QUIRKY = "__sep_quirky__"
-SEP_OTHER = "__sep_other__"
-
-SEPARATOR_LABELS: dict[str, str] = {
-    SEP_STANDARD: "─── 定番 ───",
-    SEP_PROFESSION: "─── 職種 ───",
-    SEP_QUIRKY: "─── 個性派 ───",
-    SEP_OTHER: "─── その他 ───",
-}
-
-PERSONA_DROPDOWN_ORDER: list[str] = [
-    RANDOM_KEY,           # 🎲 ランダム（最上位）
-    SEP_STANDARD,
-    "futsuu",             # 🧑 ふつうの人
-    "household",          # 🏠 主婦／主夫
-    "optimist",           # 😎 楽観派
-    "pessimist",          # 😟 悲観派
-    "tsukkomi",           # 🔍 ツッコミ役
-    "ideaman",            # 💡 アイデアマン
-    SEP_PROFESSION,
-    "frontline",          # 🧑‍💻 現場担当
-    "engineer",           # ⚙️ エンジニア
-    "designer",           # 🎨 デザイナー
-    "scholar",            # 🧑‍🎓 学者
-    "sales",              # 💼 営業
-    "banker",             # 🏦 元銀行員
-    "bureaucrat",         # 🏛️ 公務員
-    "consultant",         # 📊 コンサル
-    "executive",          # 👔 経営者
-    "founder_senior",     # 👴 創業者（70代）
-    SEP_QUIRKY,
-    "child",              # 🧒 子供視点
-    "minimalist",         # 🌿 ミニマリスト
-    "showa_dad",          # 🧓 昭和の親父
-    "youtuber",           # 🎬 YouTuber
-    "z_gen",              # 📱 Z 世代
-    "netizen",            # 🤓 ネット民
-    "psychic",            # 🔮 占い師
-    "villain",            # 🦹 悪役視点
-    SEP_OTHER,
-    CUSTOM_KEY,           # ✏️ カスタム
+# === ペルソナのカテゴリ（単一の真理源） ===
+# このリストだけ更新すれば、ドロップダウン順・カテゴリ区切り表示・SEPARATOR_LABELS が
+# すべて連動して再生成される。カテゴリ名が None の場合は区切り行を出さない。
+# キャラを追加／削除／並べ替える時はここを編集するだけ（PERSONA_DROPDOWN_ORDER と
+# SEPARATOR_LABELS は触らない）。
+PERSONA_CATEGORIES: list[tuple[str | None, list[str]]] = [
+    (None, [RANDOM_KEY]),                # 🎲 ランダム（最上位、カテゴリなし）
+    ("定番", [
+        "futsuu",       # 🧑 ふつうの人
+        "household",    # 🏠 主婦／主夫
+        "optimist",     # 😎 楽観派
+        "pessimist",    # 😟 悲観派
+        "tsukkomi",     # 🔍 ツッコミ役
+        "ideaman",      # 💡 アイデアマン
+    ]),
+    ("職種", [
+        "frontline",        # 🧑‍💻 現場担当
+        "engineer",         # ⚙️ エンジニア
+        "designer",         # 🎨 デザイナー
+        "scholar",          # 🧑‍🎓 学者
+        "sales",            # 💼 営業
+        "banker",           # 🏦 元銀行員
+        "bureaucrat",       # 🏛️ 公務員
+        "consultant",       # 📊 コンサル
+        "executive",        # 👔 経営者
+        "founder_senior",   # 👴 創業者
+    ]),
+    ("個性派", [
+        "child",        # 🧒 子供視点
+        "minimalist",   # 🌿 ミニマリスト
+        "showa_dad",    # 🧓 昭和の親父
+        "youtuber",     # 🎬 YouTuber
+        "z_gen",        # 📱 Z 世代
+        "netizen",      # 🤓 ネット民
+        "psychic",      # 🔮 占い師
+        "villain",      # 🦹 悪役視点
+    ]),
+    ("その他", [CUSTOM_KEY]),             # ✏️ カスタム
 ]
+
+
+def _build_dropdown_metadata() -> tuple[list[str], dict[str, str]]:
+    """`PERSONA_CATEGORIES` から `PERSONA_DROPDOWN_ORDER` と `SEPARATOR_LABELS` を生成する。
+
+    各カテゴリのインデックスから区切り行用のセンチネルキー `__sep_<i>__` を作り、
+    その表示文字列を `─── <カテゴリ名> ───` で組み立てる。
+    """
+    order: list[str] = []
+    labels: dict[str, str] = {}
+    for i, (category, keys) in enumerate(PERSONA_CATEGORIES):
+        if category is not None:
+            sep_key = f"__sep_{i}__"
+            labels[sep_key] = f"─── {category} ───"
+            order.append(sep_key)
+        order.extend(keys)
+    return order, labels
+
+
+PERSONA_DROPDOWN_ORDER, SEPARATOR_LABELS = _build_dropdown_metadata()
