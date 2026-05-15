@@ -2097,7 +2097,6 @@ SEPARATOR_LABELS: dict[str, str] = {
     SEP_STANDARD: "─── 定番 ───",
     SEP_PROFESSION: "─── 職種 ───",
     SEP_QUIRKY: "─── 個性派 ───",
-    SEP_EXTREME: "─── 濃い目 ───",
     SEP_OTHER: "─── その他 ───",
 }
 
@@ -2128,7 +2127,6 @@ PERSONA_DROPDOWN_ORDER: list[str] = [
     "youtuber",           # 🎬 YouTuber
     "z_gen",              # 📱 Z 世代
     "netizen",            # 🤓 ネット民
-    SEP_EXTREME,
     "psychic",            # 🔮 占い師
     "villain",            # 🦹 悪役視点
     SEP_OTHER,
