@@ -2080,3 +2080,57 @@ PERSONA_QUIRKS: dict[str, str] = {
     "household": "「うちの家計だと」「月いくら？」「子供の塾代が」「老後 2000 万」「ふるさと納税で」「ママ友に勧めたい」",
     "minimalist": "「それ本当にいる？」「ノイズが多い」「削ぎ落とす」「シンプルに」「コアな機能だけ」「持たない」",
 }
+
+
+# === ドロップダウン表示順・カテゴリ区切り ===
+# 標準的なキャラ → 濃いキャラのグラデーション順。
+# `SEP_*` キーは区切り行用の特殊キーで、ドロップダウンに表示はするが選択不可。
+# クリックされた場合は app.py 側でデフォルトキーへ強制リバート。
+
+SEP_STANDARD = "__sep_standard__"
+SEP_PROFESSION = "__sep_profession__"
+SEP_QUIRKY = "__sep_quirky__"
+SEP_EXTREME = "__sep_extreme__"
+SEP_OTHER = "__sep_other__"
+
+SEPARATOR_LABELS: dict[str, str] = {
+    SEP_STANDARD: "─── 定番 ───",
+    SEP_PROFESSION: "─── 職種 ───",
+    SEP_QUIRKY: "─── 個性派 ───",
+    SEP_EXTREME: "─── 濃い目 ───",
+    SEP_OTHER: "─── その他 ───",
+}
+
+PERSONA_DROPDOWN_ORDER: list[str] = [
+    RANDOM_KEY,           # 🎲 ランダム（最上位）
+    SEP_STANDARD,
+    "futsuu",             # 🧑 ふつうの人
+    "household",          # 🏠 主婦／主夫
+    "optimist",           # 😎 楽観派
+    "pessimist",          # 😟 悲観派
+    "tsukkomi",           # 🔍 ツッコミ役
+    "ideaman",            # 💡 アイデアマン
+    SEP_PROFESSION,
+    "frontline",          # 🧑‍💻 現場担当
+    "engineer",           # ⚙️ エンジニア
+    "designer",           # 🎨 デザイナー
+    "scholar",            # 🧑‍🎓 学者
+    "sales",              # 💼 営業
+    "banker",             # 🏦 元銀行員
+    "bureaucrat",         # 🏛️ 公務員
+    "consultant",         # 📊 コンサル
+    "executive",          # 👔 経営者
+    "founder_senior",     # 👴 創業者（70代）
+    SEP_QUIRKY,
+    "child",              # 🧒 子供視点
+    "minimalist",         # 🌿 ミニマリスト
+    "showa_dad",          # 🧓 昭和の親父
+    "youtuber",           # 🎬 YouTuber
+    "z_gen",              # 📱 Z 世代
+    "netizen",            # 🤓 ネット民
+    SEP_EXTREME,
+    "psychic",            # 🔮 占い師
+    "villain",            # 🦹 悪役視点
+    SEP_OTHER,
+    CUSTOM_KEY,           # ✏️ カスタム
+]

@@ -67,7 +67,15 @@ from dialogue_core import (  # noqa: E402
     dialogue_events,
     save_log,
 )
-from personas import CUSTOM_KEY, DEFAULT_A_KEY, DEFAULT_B_KEY, PERSONAS, RANDOM_KEY  # noqa: E402
+from personas import (  # noqa: E402
+    CUSTOM_KEY,
+    DEFAULT_A_KEY,
+    DEFAULT_B_KEY,
+    PERSONA_DROPDOWN_ORDER,
+    PERSONAS,
+    RANDOM_KEY,
+    SEPARATOR_LABELS,
+)
 
 
 st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
@@ -834,15 +842,29 @@ def _init_state() -> None:
 
 
 def _persona_selector(side: str, default_key: str) -> dict:
-    keys = list(PERSONAS.keys())
-    idx = keys.index(default_key) if default_key in keys else 0
+    options = PERSONA_DROPDOWN_ORDER
+    state_key = f"persona_{side}_select"
+
+    # 初回 default index は、default_key が options に存在すればそこ、なければ先頭。
+    idx = options.index(default_key) if default_key in options else 0
+
+    def _format(k: str) -> str:
+        if k in SEPARATOR_LABELS:
+            return SEPARATOR_LABELS[k]
+        return PERSONAS[k]["label"]
+
     selected_key = st.selectbox(
         "議論する人格を選択",
-        keys,
+        options,
         index=idx,
-        format_func=lambda k: PERSONAS[k]["label"],
-        key=f"persona_{side}_select",
+        format_func=_format,
+        key=state_key,
     )
+
+    # 区切り行を選択した場合は無効化：default_key に戻して再描画
+    if selected_key in SEPARATOR_LABELS:
+        st.session_state[state_key] = default_key
+        st.rerun()
 
     if selected_key == CUSTOM_KEY:
         name = st.text_input("名前", value="カスタム", key=f"persona_{side}_custom_name")
