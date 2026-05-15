@@ -1116,8 +1116,8 @@ def _run_dialogue(cfg: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # === 議論ヘッダ：ペルソナ対戦表示は caption と同じくらい控えめに ===
-    st.caption(
+    # === 議論ヘッダ：キャラ対戦表示はこのアプリの売りなので大きく白文字で見せる ===
+    st.subheader(
         f"{cfg['persona_a']['label']}   ×   {cfg['persona_b']['label']}"
     )
     st.caption(
