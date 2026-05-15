@@ -2105,7 +2105,6 @@ PERSONA_QUIRKS: dict[str, str] = {
 SEP_STANDARD = "__sep_standard__"
 SEP_PROFESSION = "__sep_profession__"
 SEP_QUIRKY = "__sep_quirky__"
-SEP_EXTREME = "__sep_extreme__"
 SEP_OTHER = "__sep_other__"
 
 SEPARATOR_LABELS: dict[str, str] = {

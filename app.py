@@ -626,7 +626,7 @@ _SIDEBAR_CSS = """
             display: flex !important;
             justify-content: center !important;
         }
-        .ai-giron-vs {
+        .ai-zatsudan-vs {
             padding-top: 0 !important;
             padding-bottom: 0 !important;
             margin: 0 !important;
@@ -634,7 +634,7 @@ _SIDEBAR_CSS = """
             line-height: 1 !important;
         }
         /* VS を含む列ブロックの上下余白を圧縮 */
-        div[data-testid="stColumn"]:has(.ai-giron-vs) {
+        div[data-testid="stColumn"]:has(.ai-zatsudan-vs) {
             padding-top: 0 !important;
             padding-bottom: 0 !important;
             margin-top: -10px !important;
@@ -659,7 +659,7 @@ _SIDEBAR_CSS = """
         .btn-gap { height: 6px !important; }
     }
 
-    .ai-giron-title-main {
+    .ai-zatsudan-title-main {
         font-family: 'Dela Gothic One', sans-serif !important;
         font-size: clamp(26px, 5.5vw, 38px) !important;
         color: white !important;
@@ -671,7 +671,7 @@ _SIDEBAR_CSS = """
         width: fit-content !important;
         display: block !important;
     }
-    .ai-giron-title-login {
+    .ai-zatsudan-title-login {
         font-family: 'Dela Gothic One', sans-serif !important;
         font-size: clamp(38px, 9vw, 72px) !important;
         color: white !important;
@@ -681,7 +681,7 @@ _SIDEBAR_CSS = """
         letter-spacing: -1.8px !important;
         white-space: nowrap !important;
     }
-    .ai-giron-vs {
+    .ai-zatsudan-vs {
         font-family: 'Dela Gothic One', sans-serif !important;
         font-size: 24px;
         color: white;
@@ -796,7 +796,7 @@ def _check_password() -> bool:
                  font-size: clamp(64px, 18vw, 128px); line-height: 0.75;">🗣️</span>
   </div>
   <!-- 2行目: AIたち、どう思う？ -->
-  <div class="ai-giron-title-login">AIたち、どう思う？</div>
+  <div class="ai-zatsudan-title-login">AIたち、どう思う？</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.88rem; margin: 10px 0 80px 0; text-align: center;">
     AIの雑談、のぞいてみる？
@@ -990,7 +990,7 @@ def _main_form() -> dict:
                  font-size: clamp(48px, 12vw, 72px); line-height: 0.75;">🗣️</span>
   </div>
   <!-- 2行目: AIたち、どう思う？ -->
-  <div class="ai-giron-title-main">AIたち、どう思う？</div>
+  <div class="ai-zatsudan-title-main">AIたち、どう思う？</div>
   <!-- サブタイトル -->
   <p style="color: #8a8f98; font-size: 0.82rem; margin: 6px 0 0 0; text-align: center;">
     AIの雑談、のぞいてみる？
@@ -1024,7 +1024,7 @@ def _main_form() -> dict:
     with col_a:
         persona_a = _persona_selector("A", DEFAULT_A_KEY)
     with col_vs:
-        st.markdown('<div class="ai-giron-vs">VS</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ai-zatsudan-vs">VS</div>', unsafe_allow_html=True)
     with col_b:
         persona_b = _persona_selector("B", DEFAULT_B_KEY)
 
@@ -1094,21 +1094,6 @@ def _render_past_log(log_path: Path) -> None:
     if st.button("← 閉じる"):
         st.session_state.viewing_log = None
         st.rerun()
-
-
-def _randomize_cfg(cfg: dict) -> dict:
-    """お題・キャラ・パラメータを全てランダムに上書きする。"""
-    keys_pool = [k for k in PERSONAS.keys() if k not in (CUSTOM_KEY, RANDOM_KEY)]
-    a_key, b_key = random.sample(keys_pool, 2)
-    return {
-        **cfg,
-        "topic": random.choice(RANDOM_TOPICS),
-        "persona_a": PERSONAS[a_key],
-        "persona_b": PERSONAS[b_key],
-        "max_rounds": random.randint(5, 10),
-        "interval": random.randint(2, 4),
-        "delay": round(random.uniform(1.0, 2.5), 1),
-    }
 
 
 def _resolve_random_personas(cfg: dict) -> dict:
