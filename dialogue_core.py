@@ -127,7 +127,7 @@ def _friendly_error_text(error_msg: str) -> str:
     マッチしない場合は最初の 200 文字を返す。
     """
     if _is_quota_per_day(error_msg):
-        return "💸😭 今日の無料枠（500回/日）使い切ったみたい。明日また試してな…"
+        return "今日の無料枠（500回/日）使い切ったみたい💸💸💸　明日また試して😭"
     if _is_rate_limit_error(error_msg):
         return "😅 API急ぎすぎたかも。1〜2分待ってもう一回どうぞ"
     if _is_unavailable_error(error_msg):
@@ -543,7 +543,7 @@ def dialogue_events(
             elif item_type == "error":
                 yield {
                     "type": "error",
-                    "text": f"{persona_a['name']}: {_friendly_error_text(str(payload))}",
+                    "text": _friendly_error_text(str(payload)),
                 }
                 return
         if last_a is None:
@@ -581,7 +581,7 @@ def dialogue_events(
             elif item_type == "error":
                 yield {
                     "type": "error",
-                    "text": f"{persona_b['name']}: {_friendly_error_text(str(payload))}",
+                    "text": _friendly_error_text(str(payload)),
                 }
                 return
         if last_b is None:

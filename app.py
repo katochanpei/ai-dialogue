@@ -920,7 +920,7 @@ def _render_event(ev: dict, container) -> None:
                     )
                 st.markdown(ev["text"])
     elif t == "error":
-        container.error(f"❌ {ev['text']}")
+        container.error(ev['text'])
 
 
 def _list_past_logs() -> list[Path]:
@@ -1116,9 +1116,9 @@ def _run_dialogue(cfg: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # === 議論ヘッダ（お題より控えめ） ===
-    st.subheader(
-        f"💬 雑談: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
+    # === 議論ヘッダ：ペルソナ対戦表示は caption と同じくらい控えめに ===
+    st.caption(
+        f"{cfg['persona_a']['label']}   ×   {cfg['persona_b']['label']}"
     )
     st.caption(
         f"⚙️ 最大 {cfg['max_rounds']} 往復 / "
