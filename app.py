@@ -920,7 +920,32 @@ def _render_event(ev: dict, container) -> None:
                     )
                 st.markdown(ev["text"])
     elif t == "error":
-        container.error(ev['text'])
+        text = ev["text"]
+        # 視認性のため、特定の絵文字を <span> で拡大する
+        big_emoji_groups = [
+            ("💸💸💸", "1.9em"),
+            ("😭", "1.9em"),
+            ("😅", "1.6em"),
+            ("😪", "1.6em"),
+        ]
+        for emoji_group, size in big_emoji_groups:
+            text = text.replace(
+                emoji_group,
+                f'<span style="font-size: {size}; vertical-align: middle; line-height: 1;">{emoji_group}</span>',
+            )
+        container.markdown(
+            f"""<div style="
+                background: rgba(248, 113, 113, 0.12);
+                border-left: 4px solid #f87171;
+                padding: 16px 20px;
+                border-radius: 10px;
+                color: #fecaca;
+                font-size: 16px;
+                line-height: 1.9;
+                margin: 12px 0;
+            ">{text}</div>""",
+            unsafe_allow_html=True,
+        )
 
 
 def _list_past_logs() -> list[Path]:
