@@ -873,7 +873,7 @@ def _render_event(ev: dict, container) -> None:
             st.write(ev["text"])
     elif t == "facilitator":
         with container.chat_message("ai", avatar="🎤"):
-            st.caption(f"ファシリテーター介入（{ev['round']}往復経過）")
+            st.caption(f"ちょい話題振り（{ev['round']}往復経過）")
             st.info(ev["text"])
     elif t == "retry":
         wait_sec = ev.get("wait_sec", 0)
@@ -1008,7 +1008,7 @@ def _main_form() -> dict:
     )
     with st.expander("⚙️ 詳細パラメータ", expanded=False):
         max_rounds = st.slider("最大往復", 1, 30, 20)
-        interval = st.slider("ファシリテーター介入間隔", 1, 10, 3)
+        interval = st.slider("ちょい話題振りの間隔", 1, 10, 3)
         delay = st.slider("発言間スリープ (秒)", 0.0, 5.0, 2.0, 0.5)
 
     if not _is_multi_user_mode():
@@ -1118,11 +1118,11 @@ def _run_dialogue(cfg: dict) -> None:
 
     # === 議論ヘッダ（お題より控えめ） ===
     st.subheader(
-        f"💬 議論: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
+        f"💬 雑談: {cfg['persona_a']['label']}   vs   {cfg['persona_b']['label']}"
     )
     st.caption(
         f"⚙️ 最大 {cfg['max_rounds']} 往復 / "
-        f"{cfg['interval']} 往復ごとにファシリテーター介入 / "
+        f"{cfg['interval']} 往復ごとにちょい話題振り / "
         f"発言間 {cfg['delay']} 秒"
     )
 
@@ -1206,7 +1206,7 @@ def _run_dialogue(cfg: dict) -> None:
                 _clear_retry()
                 def _render_fac(_ev=ev):
                     with st.chat_message("ai", avatar="🎤"):
-                        st.caption(f"ファシリテーター介入（{_ev['round']}往復経過）")
+                        st.caption(f"ちょい話題振り（{_ev['round']}往復経過）")
                         st.info(_ev["text"])
                 if not _swap_into_placeholder(_render_fac):
                     _render_event(ev, chat_container)

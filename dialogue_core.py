@@ -613,14 +613,14 @@ def dialogue_events(
         if round_num % intervention_interval == 0 and round_num < max_rounds:
             yield {
                 "type": "thinking",
-                "role": "ファシリテーター",
+                "role": "ちょい話題振り",
                 "emoji": "🎤",
                 "message": _pick_facilitator_thinking(),
                 "for_event": "facilitator",
             }
             fac = _call_facilitator(client, transcript)
             yield {"type": "facilitator", "round": round_num, "text": fac}
-            next_input = f"{last_b}\n\n（ファシリテーターより: {fac}）"
+            next_input = f"{last_b}\n\n（横から一言: {fac}）"
         else:
             next_input = last_b
 
@@ -668,7 +668,7 @@ def build_log_markdown(
             lines.append(ev["text"])
             lines.append("")
         elif t == "facilitator":
-            lines.append(f"## 🎤 ファシリテーター介入（{ev['round']}往復経過）")
+            lines.append(f"## 🎤 ちょい話題振り（{ev['round']}往復経過）")
             lines.append("")
             lines.append(ev["text"])
             lines.append("")
