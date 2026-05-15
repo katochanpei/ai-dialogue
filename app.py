@@ -854,7 +854,7 @@ def _persona_selector(side: str, default_key: str) -> dict:
         return PERSONAS[k]["label"]
 
     selected_key = st.selectbox(
-        "議論する人格を選択",
+        "誰と話してもらう？",
         options,
         index=idx,
         format_func=_format,
@@ -906,14 +906,14 @@ def _render_event(ev: dict, container) -> None:
             f"{wait_sec:.0f} 秒待機してから自動リトライします（{attempt}回目）..."
         )
     elif t == "agreement":
-        container.success(f"✅ 合意成立！（{ev['round']}往復）")
+        container.success(f"✅ 2人がノってきた！（{ev['round']}往復）")
     elif t == "end":
-        container.warning(f"⏱ 最大往復数 {ev['round']} に到達。合意せず終了。")
+        container.warning(f"⏱ ラリーの上限。今回はノり切れずに終わった。（{ev['round']}往復）")
     elif t == "summary":
         with container.container():
             st.markdown("---")
-            st.markdown("# 📋 結論ブリーフィング")
-            st.caption("議論の要約と、あなたの次のアクション")
+            st.markdown("# 📋 雑談のまとめ")
+            st.caption("2人がノってた話と、動けそうな次の一手")
             with st.container(border=True):
                 if ev.get("topic"):
                     st.markdown(
@@ -940,7 +940,17 @@ def _render_event(ev: dict, container) -> None:
 """,
                         unsafe_allow_html=True,
                     )
-                st.markdown(ev["text"])
+                # 2 部構成（ラフ口語 + 構造化）の `---` 区切りで分割表示
+                summary_text = ev["text"]
+                parts = summary_text.split("\n---\n", 1)
+                if len(parts) == 2:
+                    rough, structured = parts[0].strip(), parts[1].strip()
+                    st.markdown(rough)
+                    with st.expander("▼ 詳しいまとめを見る", expanded=False):
+                        st.markdown(structured)
+                else:
+                    # 区切りがない場合（旧フォーマット等）は従来通り全文表示
+                    st.markdown(summary_text)
     elif t == "error":
         text = ev["text"]
         # 視認性のため、特定の絵文字を <span> で拡大する
@@ -1012,7 +1022,7 @@ def _main_form() -> dict:
         height=160,
         key="topic_input",
         label_visibility="collapsed",
-        help="空のまま「議論スタート！」を押すと、20 種類のお題プールからランダムに選ばれます。",
+        help="空欄でも OK。お題はランダムで決まる。",
     )
     topic = topic_input.strip() or random.choice(RANDOM_TOPICS)
 
@@ -1044,7 +1054,7 @@ def _main_form() -> dict:
     # === セクション間スペース（フォーム → 折りたたみ） ===
     st.markdown('<div style="height: 48px;"></div>', unsafe_allow_html=True)
 
-    # === セクション3: 折りたたみ要素（詳細パラメータ／ヘルプ） ===
+    # === セクション3: 折りたたみ要素（細かい設定／ヘルプ） ===
     st.markdown(
         """
 <style>
@@ -1053,18 +1063,18 @@ def _main_form() -> dict:
 """,
         unsafe_allow_html=True,
     )
-    with st.expander("⚙️ 詳細パラメータ", expanded=False):
-        max_rounds = st.slider("最大往復", 1, 30, 20)
+    with st.expander("⚙️ 細かい設定", expanded=False):
+        max_rounds = st.slider("最大ラリー数", 1, 30, 20)
         interval = st.slider("ちょい話題振りの間隔", 1, 10, 3)
-        delay = st.slider("発言間スリープ (秒)", 0.0, 5.0, 2.0, 0.5)
+        delay = st.slider("発言の間（秒）", 0.0, 5.0, 2.0, 0.5)
 
     if not _is_multi_user_mode():
-        with st.expander("📜 過去ログ", expanded=False):
+        with st.expander("📜 これまでの雑談", expanded=False):
             log_files = _list_past_logs()
             if log_files:
                 log_labels = ["（選択してください）"] + [p.stem for p in log_files]
                 picked = st.selectbox(
-                    "過去ログ", log_labels, label_visibility="collapsed"
+                    "これまでの雑談", log_labels, label_visibility="collapsed"
                 )
                 if picked != "（選択してください）":
                     st.session_state.viewing_log = next(
@@ -1348,7 +1358,7 @@ def main() -> None:
         # 議論完了後：底部に控えめな戻るリンク
         st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="back-action-wrap"></div>', unsafe_allow_html=True)
-        if st.button("← 新しい議論を始める", key="back_to_form_btn"):
+        if st.button("← もう一回聞いてみる", key="back_to_form_btn"):
             _reset_dialogue_state()
             st.rerun()
 
