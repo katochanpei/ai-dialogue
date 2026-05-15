@@ -101,9 +101,39 @@ def _is_unavailable_error(error_msg: str) -> bool:
     return "UNAVAILABLE" in error_msg or "503" in error_msg
 
 
+def _is_quota_per_day(error_msg: str) -> bool:
+    """無料枠の1日上限到達。24時間明けるまで復活しないのでリトライ無駄。"""
+    return (
+        "PerDay" in error_msg
+        or "GenerateRequestsPerDayPerProjectPerModel" in error_msg
+        or "generate_content_free_tier_requests" in error_msg
+    )
+
+
 def _is_transient_error(error_msg: str) -> bool:
-    """リトライで自動回復が期待できる過渡的なエラー全般。"""
+    """リトライで自動回復が期待できる過渡的なエラー全般。
+
+    PerDay（無料枠1日上限）は 24 時間経たないと復活しないので除外する。
+    """
+    if _is_quota_per_day(error_msg):
+        return False
     return _is_rate_limit_error(error_msg) or _is_unavailable_error(error_msg)
+
+
+def _friendly_error_text(error_msg: str) -> str:
+    """技術的なエラーメッセージを雑談トーンの一言に翻訳して返す。
+
+    元のメッセージは長すぎる／ユーザに無関係なので、よくあるパターンだけ短文化する。
+    マッチしない場合は最初の 200 文字を返す。
+    """
+    if _is_quota_per_day(error_msg):
+        return "💸😭 今日の無料枠（500回/日）使い切ったみたい。明日また試してな…"
+    if _is_rate_limit_error(error_msg):
+        return "😅 API急ぎすぎたかも。1〜2分待ってもう一回どうぞ"
+    if _is_unavailable_error(error_msg):
+        return "😪 Geminiが今ちょい混雑中。少し時間置いてもう一回"
+    short = error_msg[:200].strip()
+    return f"❌ なんかエラー出てもうた: {short}"
 
 
 def _parse_retry_delay(error_msg: str) -> float:
@@ -511,7 +541,10 @@ def dialogue_events(
             elif item_type == "result":
                 last_a = payload
             elif item_type == "error":
-                yield {"type": "error", "text": f"{persona_a['name']}: {payload}"}
+                yield {
+                    "type": "error",
+                    "text": f"{persona_a['name']}: {_friendly_error_text(str(payload))}",
+                }
                 return
         if last_a is None:
             return
@@ -546,7 +579,10 @@ def dialogue_events(
             elif item_type == "result":
                 last_b = payload
             elif item_type == "error":
-                yield {"type": "error", "text": f"{persona_b['name']}: {payload}"}
+                yield {
+                    "type": "error",
+                    "text": f"{persona_b['name']}: {_friendly_error_text(str(payload))}",
+                }
                 return
         if last_b is None:
             return
