@@ -16,6 +16,7 @@ import streamlit.components.v1 as components
 
 
 RANDOM_TOPICS = [
+    # ── ビジネス・働き方 ──
     "来年バズりそうな新サービスを1つ考えて、両者で具体案として合意してください。",
     "リモートワークと出社、これからの最適なバランスは何か。",
     "AIに任せていい仕事と、人間がやり続けるべき仕事の境界線は。",
@@ -24,18 +25,114 @@ RANDOM_TOPICS = [
     "10年後も生き残る職業を3つに絞ってください。",
     "Z世代が本当に求めている福利厚生は何か、1つに絞って提案してください。",
     "通勤時間をビジネスチャンスに変える新サービスを1つ考えてください。",
+    "オンライン会議をもっと楽しくする工夫を1つ提案してください。",
+    "若手社員のモチベーションを上げる最強の仕掛けを1つ決めてください。",
+    "もしオフィスを廃止するなら、代わりに何を作るべきか。",
+    "退職を引き留めるべき社員と、引き留めるべきでない社員の見分け方は。",
+    "会社の飲み会、これからの時代どうあるべきか。",
+    "評価制度を完全に廃止したらどうなると思いますか。",
+    "「いい上司」と「いい先輩」の決定的な違いは何か。",
+    "起業するなら最初に投資すべきものは何か、1つに絞ってください。",
+    # ── 業界・新規事業 ──
     "ペット業界で今後伸びるサービスを1つ提案してください。",
     "シニア向けに本当に売れる新商品とは何かを決めてください。",
     "コンビニで売れる新カテゴリの商品を1つ提案してください。",
     "外食産業の人手不足を解決する画期的なアイデアを1つ決めてください。",
-    "オンライン会議をもっと楽しくする工夫を1つ提案してください。",
-    "若手社員のモチベーションを上げる最強の仕掛けを1つ決めてください。",
     "電気代を半分にする新しい家電のアイデアを1つ考えてください。",
-    "もしオフィスを廃止するなら、代わりに何を作るべきか。",
-    "30秒で人を笑わせる動画コンテンツの企画を1つ。",
     "新しい朝活ビジネスのアイデアを1つ提案してください。",
     "サブスクリプションが向くサービスと向かないサービスの境界線は。",
     "地方都市の人口減少を逆手に取った新ビジネスを1つ。",
+    "30秒で人を笑わせる動画コンテンツの企画を1つ。",
+    # ── テクノロジー・AI ──
+    "10年後、スマートフォンはどんな形に進化していると思いますか。",
+    "SNSは人を幸せにしているのか、不幸にしているのか。",
+    "生成AIを子どもに使わせるべきか、制限すべきか。",
+    "パスワードという仕組み、いつ消えると思いますか。",
+    "自動運転が完全に普及したら、街はどう変わると思いますか。",
+    "メタバースが本当に流行るために、最後に必要なピースは何か。",
+    "プログラミング教育、本当に小学生から必要か。",
+    "スマートウォッチの次に来るウェアラブルデバイスを1つ予想してください。",
+    # ── お金・経済 ──
+    "20代の貯金、現金と投資の最適な比率は。",
+    "「老後2000万円問題」とどう向き合えばいいのか。",
+    "キャッシュレス完全移行で困ることは何か、1つ挙げてください。",
+    "NISAを始めるなら、最初に買うべきは何か。",
+    "ベーシックインカムが実現したら、何が一番変わると思いますか。",
+    "給料を上げる交渉、一番効くタイミングはいつか。",
+    "「家を買う」と「一生賃貸」、結局どちらが得か。",
+    "円安が続くと、私たちの暮らしで最初に変わるものは何か。",
+    # ── 健康・ウェルネス ──
+    "朝活と夜活、生産性が上がるのはどちらか。",
+    "睡眠時間とアウトプットの質、最も効くのは何時間か。",
+    "ジム通いと毎日散歩、続けやすいのはどちらか。",
+    "メンタルが落ちたとき、最初に試すべき1つの行動は。",
+    "デジタルデトックスは本当に効果があるのか。",
+    "健康診断で本当に注目すべき項目を1つ挙げてください。",
+    "サウナブームはいつまで続くと思いますか。",
+    # ── 食・グルメ ──
+    "最後の晩餐に1品だけ選ぶなら、何にしますか。",
+    "日本の朝食、和食と洋食どちらが続けやすいか。",
+    "100年後も残っている日本食を1つ予想してください。",
+    "ラーメンの究極の1杯、塩・醤油・味噌・豚骨どれか。",
+    "食品ロスを家庭で確実に減らす1つの工夫は。",
+    "お酒を飲まない人が増える時代、居酒屋はどう変わるべきか。",
+    # ── 教育・子育て ──
+    "子どもに本当に伝えたい1つの価値観は何か。",
+    "学校の宿題、本当に必要か。",
+    "中学受験はする派かしない派か、決定的な分かれ目は。",
+    "親が子どもにスマホを渡す最適なタイミングは。",
+    "「いい教育」とは結局、何で測ればいいのか。",
+    "プログラミング以外で、これからの子どもに必要な1つのスキルは。",
+    "習い事を1つだけ選ぶなら、何をさせたいか。",
+    # ── 家族・人間関係 ──
+    "結婚するメリットとデメリット、結局どちらが大きいか。",
+    "親孝行で本当に喜ばれることは何か、1つに絞ってください。",
+    "友達は量と質、どちらを重視すべきか。",
+    "夫婦円満の最大の秘訣を1つだけ挙げてください。",
+    "人見知りを克服する一番効く方法は。",
+    "「いい人間関係」と「楽な人間関係」の境界線は。",
+    # ── ライフスタイル・住まい ──
+    "都会暮らしと田舎暮らし、これからの時代どちらが得か。",
+    "部屋の片付けで一番効くルールを1つ決めてください。",
+    "ミニマリストと収集家、人生を楽しんでいるのはどちらか。",
+    "1日の「やることリスト」、最適な数は。",
+    "朝ルーティンで1つだけやるなら、何にしますか。",
+    "一人暮らしと実家暮らし、貯金力に出る差は何か。",
+    # ── 旅行・観光 ──
+    "日本で一度は行くべき場所を1つだけ選んでください。",
+    "海外旅行と国内旅行、満足度が高いのはどちらか。",
+    "旅行で「本当に必要な持ち物」を1つ挙げてください。",
+    "一人旅と複数旅、人生で得るものが多いのはどちらか。",
+    # ── スポーツ・趣味 ──
+    "大人になってから始めるなら、最強の趣味は何か。",
+    "プロスポーツ観戦は会場とテレビ、どちらが楽しいか。",
+    "運動が続かない人に効く1つのコツは。",
+    "ゲームは時間の無駄か、それとも価値ある投資か。",
+    "読書とポッドキャスト、頭に残るのはどちらか。",
+    # ── 文化・エンタメ ──
+    "これから10年で消えるエンタメと、生き残るエンタメの違いは。",
+    "紙の本と電子書籍、最終的に勝つのはどちらか。",
+    "「推し活」は時代の必然か、一時のブームか。",
+    # ── 環境・社会 ──
+    "プラスチックゴミ問題、家庭レベルで一番効く対策は。",
+    "もし日本の祝日を1つだけ追加できるなら、いつ・どんな日にしますか。",
+    "投票率を上げる本当に効果がある仕掛けを1つ決めてください。",
+    "ふるさと納税は社会にとって得か、損か。",
+    # ── ファッション・美容 ──
+    "服にお金をかける派か、かけない派か。",
+    "美容にかける時間とお金、最適なバランスは。",
+    # ── 科学・宇宙・未来 ──
+    "火星移住は人類に本当に必要か。",
+    "もし1つだけ未来予測ができるなら、何を知りたいか。",
+    # ── メディア・SNS ──
+    "TikTokは10年後どうなっていると思いますか。",
+    "匿名性が消えたSNS、いいことか悪いことか。",
+    "ニュースはどこから取るのが正解か。",
+    # ── 自己啓発・哲学 ──
+    "「成功」と「幸福」、どちらを優先すべきか。",
+    "後悔しない人生のために、20代でやっておくべき1つのことは。",
+    "「努力」と「才能」、最終的に効くのはどちらか。",
+    "死ぬ前に1つだけ言葉を残せるとしたら、何を残すか。",
 ]
 
 
@@ -581,6 +678,52 @@ _SIDEBAR_CSS = """
         color: #8a8f98 !important;
     }
 
+    /* === 考え中インジケータ：3点が順番に波打つ（フリーズ防止） === */
+    .thinking-line {
+        color: #c9cdd2 !important;
+        line-height: 1.6 !important;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 2px;
+    }
+    .thinking-line em {
+        font-style: italic !important;
+        color: #c9cdd2 !important;
+    }
+    .thinking-dots {
+        display: inline-flex;
+        gap: 1px;
+        margin-left: 4px;
+    }
+    .thinking-dots span {
+        display: inline-block !important;
+        font-weight: 700 !important;
+        font-size: 1.1em !important;
+        color: #fbbf24 !important;
+        opacity: 0.25;
+        animation: thinking-blink 1.2s ease-in-out infinite !important;
+    }
+    .thinking-dots span:nth-child(1) { animation-delay: 0s; }
+    .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes thinking-blink {
+        0%, 60%, 100% {
+            opacity: 0.25;
+            transform: translateY(0);
+        }
+        30% {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+    }
+    /* 動きを抑制したいユーザー設定への配慮（OS / ブラウザ側で reduce 指定時） */
+    @media (prefers-reduced-motion: reduce) {
+        .thinking-dots span {
+            animation: none !important;
+            opacity: 0.7 !important;
+        }
+    }
+
     /* === エクスパンダー：Linear rounded.lg (12px) + spacing.md (16px) + body LS (-0.05) === */
     [data-testid="stExpander"] {
         border: 1px solid #23252a !important;
@@ -604,9 +747,6 @@ _SIDEBAR_CSS = """
     }
 
     /* === サマリー：ラフ口語部分（class 直指定で確実適用） === */
-    .summary-detail-marker {
-        display: none;
-    }
     .summary-rough-text {
         font-size: 20px !important;
         line-height: 1.85 !important;
@@ -622,39 +762,85 @@ _SIDEBAR_CSS = """
         color: #ffffff !important;
     }
 
-    /* === サマリー：詳細 expander を派手化（黄色枠でスルー防止） === */
-    [data-testid="element-container"]:has(.summary-detail-marker)
-        + [data-testid="element-container"] [data-testid="stExpander"] {
+    /* === サマリー：詳細セクション（<details> 直書きで CSS 確実適用） === */
+    .summary-detail-box {
         border: 3px solid #fbbf24 !important;
-        background: rgba(251, 191, 36, 0.06) !important;
+        background: rgba(251, 191, 36, 0.08) !important;
         border-radius: 14px !important;
-        margin-top: 24px !important;
-        box-shadow: 0 0 16px rgba(251, 191, 36, 0.22) !important;
+        margin-top: 28px !important;
+        box-shadow: 0 0 24px rgba(251, 191, 36, 0.32) !important;
+        overflow: hidden !important;
     }
-    [data-testid="element-container"]:has(.summary-detail-marker)
-        + [data-testid="element-container"] [data-testid="stExpander"]
-        details > summary {
-        padding: 18px 22px !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        letter-spacing: 0 !important;
+    .summary-detail-toggle {
+        cursor: pointer !important;
+        padding: 20px 24px !important;
+        font-size: 20px !important;
+        font-weight: 800 !important;
+        color: #fef3c7 !important;
+        list-style: none !important;
+        user-select: none !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        background: rgba(251, 191, 36, 0.04) !important;
     }
-    [data-testid="element-container"]:has(.summary-detail-marker)
-        + [data-testid="element-container"] [data-testid="stExpander"]
-        details > summary p {
-        font-size: 18px !important;
+    .summary-detail-toggle:hover {
+        background: rgba(251, 191, 36, 0.14) !important;
+    }
+    .summary-detail-toggle::-webkit-details-marker {
+        display: none !important;
+    }
+    .summary-detail-chev {
+        display: inline-block !important;
+        font-size: 14px !important;
+        color: #fbbf24 !important;
+        transition: transform 0.2s ease !important;
+    }
+    .summary-detail-box[open] .summary-detail-chev {
+        transform: rotate(180deg) !important;
+    }
+    .summary-detail-content {
+        padding: 6px 24px 22px 24px !important;
+        font-size: 15px !important;
+        line-height: 1.85 !important;
+        color: #f1f3f5 !important;
+    }
+    .summary-detail-content h2,
+    .summary-detail-content h3,
+    .summary-detail-content h4 {
         font-weight: 700 !important;
         color: #ffffff !important;
-        letter-spacing: 0 !important;
+        margin: 20px 0 10px 0 !important;
     }
-    /* 詳細部分（expander 内）の bold もマーカー帯（大きさは通常） */
-    [data-testid="element-container"]:has(.summary-detail-marker)
-        ~ [data-testid="element-container"] [data-testid="stExpander"] strong,
-    [data-testid="element-container"]:has(.summary-detail-marker)
-        + [data-testid="element-container"] [data-testid="stExpander"] strong {
+    .summary-detail-content h2 { font-size: 18px !important; }
+    .summary-detail-content h3 { font-size: 17px !important; }
+    .summary-detail-content h4 { font-size: 16px !important; }
+    .summary-detail-content ul {
+        padding-left: 22px !important;
+        margin: 6px 0 14px 0 !important;
+    }
+    .summary-detail-content li {
+        margin: 4px 0 !important;
+        color: #f1f3f5 !important;
+    }
+    .summary-detail-content p {
+        margin: 8px 0 !important;
+        color: #f1f3f5 !important;
+    }
+    /* 詳細本文の bold もマーカー帯（サイズは通常、強調だけ目立つ） */
+    .summary-detail-content strong {
         background: linear-gradient(transparent 55%, rgba(252, 211, 77, 0.65) 55%) !important;
         font-weight: 800 !important;
         padding: 0 3px !important;
+        color: #ffffff !important;
+    }
+
+    /* === チャットメッセージの bold も黄色マーカー帯（強調部分だけ目立たせる） === */
+    [data-testid="stChatMessage"] strong,
+    [data-testid="stChatMessage"] b {
+        background: linear-gradient(transparent 55%, rgba(252, 211, 77, 0.65) 55%) !important;
+        font-weight: 800 !important;
+        padding: 0 2px !important;
         color: #ffffff !important;
     }
 
@@ -942,6 +1128,55 @@ def _persona_selector(side: str, default_key: str) -> dict:
     return PERSONAS[selected_key]
 
 
+def _markdown_to_html(md: str) -> str:
+    """構造化 Markdown を HTML に変換（`##` 見出し / `-` 箇条書き / `**bold**` / 段落）。
+
+    Streamlit の expander に頼らず `<details>` 直書きで派手な装飾を効かせるため、
+    サマリー詳細部分の Markdown を自前で HTML 化する。`markdown` ライブラリ依存を避けるため
+    最小限の変換のみ実装。
+    """
+    lines = md.split("\n")
+    html_parts: list[str] = []
+    in_list = False
+
+    def _close_list() -> None:
+        nonlocal in_list
+        if in_list:
+            html_parts.append("</ul>")
+            in_list = False
+
+    def _convert_inline(text: str) -> str:
+        """HTML エスケープしてから `**bold**` を `<strong>` に変換。"""
+        escaped = html.escape(text)
+        return re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+
+    for line in lines:
+        s = line.rstrip()
+        if not s:
+            _close_list()
+            continue
+        if s.startswith("### "):
+            _close_list()
+            html_parts.append(f"<h4>{_convert_inline(s[4:])}</h4>")
+        elif s.startswith("## "):
+            _close_list()
+            html_parts.append(f"<h3>{_convert_inline(s[3:])}</h3>")
+        elif s.startswith("# "):
+            _close_list()
+            html_parts.append(f"<h2>{_convert_inline(s[2:])}</h2>")
+        elif s.startswith("- ") or s.startswith("* "):
+            if not in_list:
+                html_parts.append("<ul>")
+                in_list = True
+            html_parts.append(f"<li>{_convert_inline(s[2:])}</li>")
+        else:
+            _close_list()
+            html_parts.append(f"<p>{_convert_inline(s)}</p>")
+
+    _close_list()
+    return "\n".join(html_parts)
+
+
 def _render_event(ev: dict, container) -> None:
     t = ev.get("type")
     if t == "turn":
@@ -1012,15 +1247,17 @@ def _render_event(ev: dict, container) -> None:
                         f'<div class="summary-rough-text">{rough_html}</div>',
                         unsafe_allow_html=True,
                     )
-                    # 詳細 expander：マーカー直後の expander を CSS で派手化
+                    # 詳細部分は <details> HTML を直書き。
+                    # Streamlit の expander DOM ラッパーに CSS が負ける問題を回避し、
+                    # 黄色枠（縮んでる時のスルー防止）＋ 本文 strong のマーカー帯を確実に適用する。
+                    detail_html = _markdown_to_html(structured)
                     st.markdown(
-                        '<div class="summary-detail-marker"></div>',
+                        f"""<details class="summary-detail-box">
+  <summary class="summary-detail-toggle"><span class="summary-detail-chev">▼</span>もっと細かいまとめを見る</summary>
+  <div class="summary-detail-content">{detail_html}</div>
+</details>""",
                         unsafe_allow_html=True,
                     )
-                    with st.expander(
-                        "もっと細かいまとめを見る", expanded=False
-                    ):
-                        st.markdown(structured)
                 else:
                     # 区切りがない場合（旧フォーマット等）は従来通り全文表示
                     st.markdown(summary_text)
@@ -1248,13 +1485,32 @@ def _run_dialogue(cfg: dict) -> None:
     retry_placeholder = None    # リトライ通知用の差し替えスロット
 
     def _show_thinking(ev: dict):
-        """次の発言が来るまで「考え中...」を表示するプレースホルダを作る。"""
+        """次の発言が来るまで「考え中...」を表示するプレースホルダを作る。
+
+        メッセージ末尾の `…` / `...` / `。` / 空白を剥がしてから、
+        UI 側で常に「3点が順番に点滅するアニメーション」を付与する。
+        フリーズして見えないように、点滅は波打つように左→右へ伝播。
+        """
         nonlocal pending_placeholder
         pending_placeholder = chat_container.empty()
+        raw_message = ev.get("message", "考え中")
+        # 末尾の "...", "…", "。", 空白を剥がして、CSS 側で必ず 3 点を付ける
+        base = re.sub(r"[。\.…\s]+$", "", raw_message)
+        body_html = html.escape(base)
+        avatar = ev.get("emoji", "💭")
+        role = ev.get("role", "")
+        dots_html = (
+            '<span class="thinking-dots">'
+            "<span>.</span><span>.</span><span>.</span>"
+            "</span>"
+        )
         with pending_placeholder.container():
-            with st.chat_message("assistant", avatar=ev.get("emoji", "💭")):
-                st.caption(f"・ {ev.get('role', '')}")
-                st.markdown(f"_{ev.get('message', '考え中...')}_")
+            with st.chat_message("assistant", avatar=avatar):
+                st.caption(f"・ {role}")
+                st.markdown(
+                    f'<div class="thinking-line"><em>{body_html}</em>{dots_html}</div>',
+                    unsafe_allow_html=True,
+                )
 
     def _swap_into_placeholder(render_fn):
         """thinking placeholder の中身を実際の発言で置き換える。"""
