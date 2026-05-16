@@ -8,6 +8,7 @@ from __future__ import annotations
 import html
 import os
 import random
+import re
 from pathlib import Path
 
 import streamlit as st
@@ -602,57 +603,58 @@ _SIDEBAR_CSS = """
         letter-spacing: -0.05px !important;
     }
 
-    /* === サマリー：ラフ口語部分を大きく + bold にマーカー効果 === */
-    .summary-rough-marker,
+    /* === サマリー：ラフ口語部分（class 直指定で確実適用） === */
     .summary-detail-marker {
         display: none;
     }
-    /* ラフ部分（マーカー直後の element-container 全体）を大きめ表示 */
-    [data-testid="element-container"]:has(.summary-rough-marker)
-        + [data-testid="element-container"] [data-testid="stMarkdown"] p {
-        font-size: 19px !important;
+    .summary-rough-text {
+        font-size: 20px !important;
         line-height: 1.85 !important;
-        margin: 8px 0 !important;
+        margin: 14px 0 26px 0 !important;
+        color: #f7f8f8 !important;
+        font-weight: 500 !important;
     }
-    /* ラフ部分の bold は蛍光ペン風の黄色マーカー帯 */
-    [data-testid="element-container"]:has(.summary-rough-marker)
-        + [data-testid="element-container"] [data-testid="stMarkdown"] strong {
-        background: linear-gradient(transparent 58%, rgba(252, 211, 77, 0.5) 58%) !important;
-        font-weight: 700 !important;
-        padding: 0 2px !important;
+    /* ラフ部分の bold は蛍光ペン風の黄色マーカー帯 + 太字 */
+    .summary-rough-text strong {
+        background: linear-gradient(transparent 55%, rgba(252, 211, 77, 0.65) 55%) !important;
+        font-weight: 800 !important;
+        padding: 0 3px !important;
         color: #ffffff !important;
     }
 
-    /* === サマリー：詳細 expander を派手化してスルー防止 === */
+    /* === サマリー：詳細 expander を派手化（黄色枠でスルー防止） === */
     [data-testid="element-container"]:has(.summary-detail-marker)
         + [data-testid="element-container"] [data-testid="stExpander"] {
-        border: 2px solid rgba(94, 106, 210, 0.55) !important;
-        background: rgba(94, 106, 210, 0.08) !important;
+        border: 3px solid #fbbf24 !important;
+        background: rgba(251, 191, 36, 0.06) !important;
         border-radius: 14px !important;
-        margin-top: 20px !important;
+        margin-top: 24px !important;
+        box-shadow: 0 0 16px rgba(251, 191, 36, 0.22) !important;
     }
     [data-testid="element-container"]:has(.summary-detail-marker)
         + [data-testid="element-container"] [data-testid="stExpander"]
         details > summary {
-        padding: 16px 20px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
+        padding: 18px 22px !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
         letter-spacing: 0 !important;
     }
     [data-testid="element-container"]:has(.summary-detail-marker)
         + [data-testid="element-container"] [data-testid="stExpander"]
         details > summary p {
-        font-size: 16px !important;
-        font-weight: 600 !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
         color: #ffffff !important;
         letter-spacing: 0 !important;
     }
-    /* 詳細部分（expander 内）の bold もマーカー帯 */
+    /* 詳細部分（expander 内）の bold もマーカー帯（大きさは通常） */
+    [data-testid="element-container"]:has(.summary-detail-marker)
+        ~ [data-testid="element-container"] [data-testid="stExpander"] strong,
     [data-testid="element-container"]:has(.summary-detail-marker)
         + [data-testid="element-container"] [data-testid="stExpander"] strong {
-        background: linear-gradient(transparent 58%, rgba(252, 211, 77, 0.5) 58%) !important;
-        font-weight: 700 !important;
-        padding: 0 2px !important;
+        background: linear-gradient(transparent 55%, rgba(252, 211, 77, 0.65) 55%) !important;
+        font-weight: 800 !important;
+        padding: 0 3px !important;
         color: #ffffff !important;
     }
 
@@ -999,19 +1001,24 @@ def _render_event(ev: dict, container) -> None:
                 parts = summary_text.split("\n---\n", 1)
                 if len(parts) == 2:
                     rough, structured = parts[0].strip(), parts[1].strip()
-                    # ラフ部分：マーカー直後の sibling 要素を CSS で大きく + bold にマーカー効果
+                    # ラフ部分：`**bold**` を <strong> に変換し、`<div class="summary-rough-text">`
+                    # でラップして HTML 直書きで描画。CSS の :has() 依存を回避し確実に効かせる。
+                    rough_html = html.escape(rough)
+                    rough_html = re.sub(
+                        r"\*\*(.+?)\*\*", r"<strong>\1</strong>", rough_html
+                    )
+                    rough_html = rough_html.replace("\n", "<br>")
                     st.markdown(
-                        '<div class="summary-rough-marker"></div>',
+                        f'<div class="summary-rough-text">{rough_html}</div>',
                         unsafe_allow_html=True,
                     )
-                    st.markdown(rough)
                     # 詳細 expander：マーカー直後の expander を CSS で派手化
                     st.markdown(
                         '<div class="summary-detail-marker"></div>',
                         unsafe_allow_html=True,
                     )
                     with st.expander(
-                        "📊 もっと細かいまとめを見る ▼", expanded=False
+                        "もっと細かいまとめを見る", expanded=False
                     ):
                         st.markdown(structured)
                 else:
