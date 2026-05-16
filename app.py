@@ -602,6 +602,60 @@ _SIDEBAR_CSS = """
         letter-spacing: -0.05px !important;
     }
 
+    /* === サマリー：ラフ口語部分を大きく + bold にマーカー効果 === */
+    .summary-rough-marker,
+    .summary-detail-marker {
+        display: none;
+    }
+    /* ラフ部分（マーカー直後の element-container 全体）を大きめ表示 */
+    [data-testid="element-container"]:has(.summary-rough-marker)
+        + [data-testid="element-container"] [data-testid="stMarkdown"] p {
+        font-size: 19px !important;
+        line-height: 1.85 !important;
+        margin: 8px 0 !important;
+    }
+    /* ラフ部分の bold は蛍光ペン風の黄色マーカー帯 */
+    [data-testid="element-container"]:has(.summary-rough-marker)
+        + [data-testid="element-container"] [data-testid="stMarkdown"] strong {
+        background: linear-gradient(transparent 58%, rgba(252, 211, 77, 0.5) 58%) !important;
+        font-weight: 700 !important;
+        padding: 0 2px !important;
+        color: #ffffff !important;
+    }
+
+    /* === サマリー：詳細 expander を派手化してスルー防止 === */
+    [data-testid="element-container"]:has(.summary-detail-marker)
+        + [data-testid="element-container"] [data-testid="stExpander"] {
+        border: 2px solid rgba(94, 106, 210, 0.55) !important;
+        background: rgba(94, 106, 210, 0.08) !important;
+        border-radius: 14px !important;
+        margin-top: 20px !important;
+    }
+    [data-testid="element-container"]:has(.summary-detail-marker)
+        + [data-testid="element-container"] [data-testid="stExpander"]
+        details > summary {
+        padding: 16px 20px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+    }
+    [data-testid="element-container"]:has(.summary-detail-marker)
+        + [data-testid="element-container"] [data-testid="stExpander"]
+        details > summary p {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #ffffff !important;
+        letter-spacing: 0 !important;
+    }
+    /* 詳細部分（expander 内）の bold もマーカー帯 */
+    [data-testid="element-container"]:has(.summary-detail-marker)
+        + [data-testid="element-container"] [data-testid="stExpander"] strong {
+        background: linear-gradient(transparent 58%, rgba(252, 211, 77, 0.5) 58%) !important;
+        font-weight: 700 !important;
+        padding: 0 2px !important;
+        color: #ffffff !important;
+    }
+
     /* ボタン間スペーサ（PC基準値、スマホで縮める） */
     .btn-gap { height: 12px; }
 
@@ -906,7 +960,7 @@ def _render_event(ev: dict, container) -> None:
             f"{wait_sec:.0f} 秒待機してから自動リトライします（{attempt}回目）..."
         )
     elif t == "agreement":
-        container.success(f"✅ 2人がノってきた！（{ev['round']}往復）")
+        container.success(f"✅ 噛み合って着地！（{ev['round']}往復）")
     elif t == "end":
         container.warning(f"⏱ ラリーの上限。今回はノり切れずに終わった。（{ev['round']}往復）")
     elif t == "summary":
@@ -945,8 +999,20 @@ def _render_event(ev: dict, container) -> None:
                 parts = summary_text.split("\n---\n", 1)
                 if len(parts) == 2:
                     rough, structured = parts[0].strip(), parts[1].strip()
+                    # ラフ部分：マーカー直後の sibling 要素を CSS で大きく + bold にマーカー効果
+                    st.markdown(
+                        '<div class="summary-rough-marker"></div>',
+                        unsafe_allow_html=True,
+                    )
                     st.markdown(rough)
-                    with st.expander("▼ 詳しいまとめを見る", expanded=False):
+                    # 詳細 expander：マーカー直後の expander を CSS で派手化
+                    st.markdown(
+                        '<div class="summary-detail-marker"></div>',
+                        unsafe_allow_html=True,
+                    )
+                    with st.expander(
+                        "📊 もっと細かいまとめを見る ▼", expanded=False
+                    ):
                         st.markdown(structured)
                 else:
                     # 区切りがない場合（旧フォーマット等）は従来通り全文表示
