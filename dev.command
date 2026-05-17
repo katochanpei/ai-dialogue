@@ -40,7 +40,7 @@ if [ -n "$EXISTING_PIDS" ]; then
     sleep 1
 fi
 
-echo "🔧 開発モードで AI議論 を起動します..."
+echo "🔧 開発モードで AIたち、どう思う？ を起動します..."
 echo "   ・app.py を保存するたびにブラウザが自動更新されます。"
 echo "   ・終了するには Ctrl+C。"
 echo "   ・URL: http://localhost:$PORT"

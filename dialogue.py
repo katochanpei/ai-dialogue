@@ -79,9 +79,9 @@ def _resolve_topic(args) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Gemini同士で勝手に議論させるAI対話システム",
+        description="Gemini同士で勝手に雑談させるAI対話システム",
     )
-    parser.add_argument("topic", nargs="*", help="議論のお題")
+    parser.add_argument("topic", nargs="*", help="雑談のお題")
     parser.add_argument(
         "--persona-a",
         default=DEFAULT_A_KEY,
@@ -115,7 +115,7 @@ def main() -> int:
         print(f"\n❌ Gemini API が利用できません（{code}）")
         print(f"\n理由:\n{message}\n", file=sys.stderr)
         return 1
-    print("✅ API利用可能。議論を開始します。\n")
+    print("✅ API利用可能。雑談を開始します。\n")
 
     events_log: list[dict] = []
     for ev in dialogue_events(

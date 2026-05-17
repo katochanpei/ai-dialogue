@@ -43,7 +43,7 @@ THINKING_MESSAGES = [
     "アイデア練り中...",
     "言葉を選んでます...",
     "思案中...",
-    "頭の中で議論中...",
+    "頭の中で組み立て中...",
     "深く考察中...",
     "ひらめき待ち...",
     "ロジック組み立て中...",
@@ -54,7 +54,7 @@ THINKING_MESSAGES = [
 
 FACILITATOR_THINKING_MESSAGES = [
     "論点を整理中...",
-    "議論を俯瞰中...",
+    "話の流れを俯瞰中...",
     "次のステップを検討中...",
     "アジェンダ調整中...",
 ]
@@ -288,7 +288,7 @@ def _maybe_inject_boke(message: str) -> str:
 
 
 def check_api_availability() -> tuple[bool, str, str]:
-    """議論開始前に API が利用可能かを最小リクエストでチェックする。
+    """雑談開始前に API が利用可能かを最小リクエストでチェックする。
 
     Returns:
         (ok, message, code)
@@ -411,7 +411,7 @@ def _call_summarizer(
     transcript: list[str],
     agreed: bool,
 ) -> str:
-    """議論を要約し、依頼者向けの実用ブリーフィングを生成する。"""
+    """雑談を要約し、依頼者向けの実用ブリーフィングを生成する。"""
     history = "\n".join(transcript)
     state = "両者が合意した" if agreed else "合意に至らなかった（上限到達）"
     prompt = f"""あなたは 2 人の雑談を盗み聞きしていた人です。

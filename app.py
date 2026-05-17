@@ -176,7 +176,7 @@ from personas import (  # noqa: E402
 )
 
 
-st.set_page_config(page_title="AI議論", page_icon="🎙", layout="wide")
+st.set_page_config(page_title="AIたち、どう思う？", page_icon="🎙", layout="wide")
 
 
 def _generate_aurora_palette() -> dict[str, str]:
@@ -539,7 +539,7 @@ _SIDEBAR_CSS = """
         outline-offset: 3px !important;
     }
 
-    /* プライマリボタン（議論スタート）：オーロラ */
+    /* プライマリボタン（雑談スタート）：オーロラ */
     @keyframes auroraDrift {
         0%   { background-position:   0%   0%; }
         25%  { background-position: 100%   0%; }
@@ -947,7 +947,7 @@ HELP_MARKDOWN = """
 
 **🎯 何ができるか**
 
-お題を放り込むと、2人のAIキャラが勝手に雑談しはじめます。最大2文の短いやりとりでテンポよく往復し、自然に「同じ方向に乗った」と判定された時点で雑談終了。終了後は議論の要約と、依頼者が次に動けるアクションを提案します。
+お題を放り込むと、2人のAIキャラが勝手に雑談しはじめます。最大2文の短いやりとりでテンポよく往復し、自然に「同じ方向に乗った」と判定された時点で雑談終了。終了後は雑談の要約と、依頼者が次に動けるアクションを提案します。
 
 **🎭 キャラ**
 
@@ -979,7 +979,7 @@ HELP_MARKDOWN = """
 - モデル: Gemini 3.1 Flash-Lite
 - キャラ数: 14 + ランダム + カスタム
 - 1日上限: 数百〜千リクエスト程度（全員合計、無料枠）
-- 1議論あたり: 10〜20リクエスト消費
+- 1回あたり: 10〜20リクエスト消費
 - 上限を超えるとその日は使用できません（翌朝復活）
 - UI: Streamlit / ホスティング: Streamlit Community Cloud
 - ソース: <a href="https://github.com/katochanpei/ai-dialogue" style="color: #5e6ad2;">github.com/katochanpei/ai-dialogue</a>
@@ -1468,7 +1468,7 @@ def _run_dialogue(cfg: dict) -> None:
         unsafe_allow_html=True,
     )
 
-    # === 議論ヘッダ：キャラ対戦表示はこのアプリの売りなので大きく白文字で見せる ===
+    # === 雑談ヘッダ：キャラ対戦表示はこのアプリの売りなので大きく白文字で見せる ===
     st.subheader(
         f"{cfg['persona_a']['label']}   ×   {cfg['persona_b']['label']}"
     )
@@ -1626,22 +1626,22 @@ def _run_dialogue(cfg: dict) -> None:
         st.session_state.running = False
 
     st.markdown("---")
-    st.subheader("📥 議論ログのダウンロード")
+    st.subheader("📥 雑談ログのダウンロード")
     st.download_button(
-        "議論ログをダウンロード",
+        "雑談ログをダウンロード",
         data=log_md.encode("utf-8"),
         file_name=log_filename,
         mime="text/markdown",
         type="primary",
     )
     st.caption(
-        "💾 議論ログは画面を離れると参照できなくなります。"
+        "💾 雑談ログは画面を離れると参照できなくなります。"
         "手元に残したい場合は、上のボタンからダウンロードしてください。"
     )
 
 
 def _reset_dialogue_state() -> None:
-    """議論完了後の状態をクリアしてフォームに戻すための初期化。"""
+    """雑談完了後の状態をクリアしてフォームに戻すための初期化。"""
     for key in ("last_log_md", "last_log_name", "last_log_path"):
         if key in st.session_state:
             st.session_state[key] = None
@@ -1668,7 +1668,7 @@ def main() -> None:
         cfg = _main_form()
 
     if cfg["start"]:
-        # フォームを消して画面を議論専用に切り替える
+        # フォームを消して画面を雑談専用に切り替える
         form_slot.empty()
 
         # 左上の戻るリンク（純粋な <a> タグ、button要素ではない）
@@ -1684,7 +1684,7 @@ def main() -> None:
         # st.error として描画される。
         _run_dialogue(cfg)
 
-        # 議論完了後：底部に控えめな戻るリンク
+        # 雑談完了後：底部に控えめな戻るリンク
         st.markdown('<div style="height: 32px;"></div>', unsafe_allow_html=True)
         st.markdown('<div class="back-action-wrap"></div>', unsafe_allow_html=True)
         if st.button("← もう一回聞いてみる", key="back_to_form_btn"):
