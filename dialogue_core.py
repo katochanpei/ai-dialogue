@@ -206,6 +206,10 @@ DEFAULT_TOPIC = (
 
 MIN_ROUNDS_BEFORE_JUDGE = 3
 
+# 逸脱検知の閾値。スコア 0〜3 のうち、これ以上で司会者が「お題に戻す」介入をする。
+# 0: お題ど真ん中 / 1: お題周辺の脱線 / 2: 関連薄い別話題 / 3: 完全に別の話
+DEVIATION_THRESHOLD = 2
+
 
 # 各キャラのシステムプロンプト末尾に共通付与される指示。
 # キャラ設定より「全体トーン」を優先させる。"会話" ではなく "雑談" を作るための核心。
@@ -268,14 +272,16 @@ def _build_system_prompt(persona: dict) -> str:
 
 # === ボケ強制モード ===
 # N% の確率で次の発言時に「ボケて」とシステム側から指示を差し込み、ノリと崩しを足す。
-BOKE_PROB = 0.25
+# 注意: お題から完全に逃げる挙動は会話崩壊の引き金になるため禁止。
+# あくまで「お題に絡めながら軽く崩す」方向に統一する。
+BOKE_PROB = 0.05
 BOKE_MODES = [
-    "今回だけ：話を完全に別の方向に逸らして、お題から逃げて1〜2文で軽く返して。",
-    "今回だけ：皮肉と短いツッコミだけで1〜2文返して。",
-    "今回だけ：全然関係ない興味（食べ物・天気・別キャラの見た目とか）に飛んで1〜2文返して。",
-    "今回だけ：ノリで適当に同意して、すぐ別の話題を振って1〜2文返して。",
-    "今回だけ：相手の発言にわざと噛み合わない返しを1〜2文してみて。",
-    "今回だけ：キャラを少し崩して、軽くボケるか茶化して1〜2文返して。",
+    "今回だけ：お題に軽く絡めながら、ちょっと脇道に逸れた具体例で1〜2文返して（最後はお題に戻すこと）。",
+    "今回だけ：皮肉と短いツッコミだけで1〜2文返して（お題の話の流れは維持）。",
+    "今回だけ：お題に関係する身近な例えや食べ物・天気にからめて1〜2文返して（脱線しすぎない）。",
+    "今回だけ：ノリで適当に同意してから、お題に関する別アングルの話題を振って1〜2文返して。",
+    "今回だけ：相手の発言にわざと噛み合わない返しを1〜2文してみて（ただしお題からは離れない）。",
+    "今回だけ：キャラを少し崩して、軽くボケるか茶化して1〜2文返して（お題は維持）。",
 ]
 
 
@@ -352,9 +358,19 @@ def check_api_availability() -> tuple[bool, str, str]:
         return False, f"APIエラー:\n{msg[:500]}", "unknown"
 
 
-def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
-    prompt = f"""2人の雑談の最新2発言を読み、**2人が同じ方向に乗ってる**かを判定してください。
+def _call_judge(
+    client: genai.Client, topic: str, last_a: str, last_b: str
+) -> bool:
+    """お題に沿って2人がノっているかを判定する。
+
+    お題と無関係な話題で意気投合しているケースは NO とする。
+    """
+    prompt = f"""2人の雑談の最新2発言を読み、**お題について 2人が同じ方向に乗ってる**かを判定してください。
 形式的な「合意」ではなく、カジュアルに同じ案／同じ気分に寄ってる状態を見ます。
+**ただし、お題と無関係な話題でノっているだけの場合は NO** にしてください。
+
+【お題】
+{topic}
 
 【発言A】
 {last_a}
@@ -363,17 +379,19 @@ def _call_judge(client: genai.Client, last_a: str, last_b: str) -> bool:
 {last_b}
 
 【YES と判定する条件】
-- 両者が同じ方向・同じ案に乗っている
-- 片方の提案や感想に、もう片方が肯定的に乗っている（例：「アリ」「いいやん」「それで」「うん」「マジそれ」「確定」「決まり」「やろう」「これでいこ」「賛成」「そうそう」「同じこと思った」など、雑談トーンの肯定でも可）
-- 反対・引っかかり・新しい疑問が残っていない
+- お題について両者が同じ方向・同じ案に乗っている
+- 片方のお題に関する提案や感想に、もう片方が肯定的に乗っている（例：「アリ」「いいやん」「それで」「うん」「マジそれ」「確定」「決まり」「やろう」「これでいこ」「賛成」「そうそう」「同じこと思った」など、雑談トーンの肯定でも可）
+- お題の方向性が揃っていれば、軽い茶々・追加の質問・小ネタは混じっていても OK（雑談ノリの会話継続の証）
+- 大筋で「もう同じこと考えてるね」「方向は一致してるね」と感じられる
 
 【NO と判定する条件】
-- どちらかが「でも」「いや」「ちょっと」「うーん」「微妙」「ちゃう」と引っかかっている
-- 話題が別方向に逸れて、同じ案について揃っていない
-- 新しい問いを投げかけている／話を広げている最中
-- まだお互いに違う案を出し合っている
+- どちらかが「でも」「いや」「ちょっと」「うーん」「微妙」「ちゃう」とお題について引っかかっている
+- 話題が別方向に逸れていて、お題について揃っていない
+- お題と関係ない話題（食べ物・趣味・天気・脇道のネタなど）でノっているだけ
+- まだお互いにお題について違う案を出し合っている（核となる結論が分かれている）
 
-雑談なので「誰向け・何ができる」みたいな完璧な具体性は要求しない。**2人がノってるか**が判定基準。
+雑談なので「誰向け・何ができる」みたいな完璧な具体性は要求しない。
+**お題について大筋の方向が揃っているか**が判定基準。新しい質問や小ネタは無視して、結論方向だけ見て判定する。
 YES または NO のみで答えてください。"""
     try:
         resp = _safe_call_with_retry(
@@ -384,9 +402,79 @@ YES または NO のみで答えてください。"""
         return False
 
 
-def _call_facilitator(client: genai.Client, transcript: list[str]) -> str:
+def _call_deviation_judge(
+    client: genai.Client, topic: str, last_a: str, last_b: str
+) -> int:
+    """直近2発言がお題からどれくらい逸れているかを 0〜3 で返す。
+
+    0: お題ど真ん中 / 1: お題周辺で軽く脱線 /
+    2: 関連の薄い別話題 / 3: 完全に別の話題
+
+    パースに失敗した場合は安全側として 0 を返す（介入を増やしすぎない）。
+    """
+    prompt = f"""次の雑談2発言が「お題」からどれくらい逸れているかを 0〜3 のスコアで判定してください。
+
+【お題】
+{topic}
+
+【発言A】
+{last_a}
+
+【発言B】
+{last_b}
+
+【スコア基準】
+0 = お題ど真ん中の話をしている
+1 = お題に関係しつつ軽く脱線している（例え話・関連エピソード）
+2 = お題との関連がかなり薄い別話題に流れている
+3 = お題と完全に無関係な話題（食事・天気・趣味・休日の予定など）になっている
+
+出力は半角数字 1 文字（0 / 1 / 2 / 3）のみ。説明・記号・改行は不要。"""
+    try:
+        resp = _safe_call_with_retry(
+            lambda: client.models.generate_content(model=MODEL, contents=prompt)
+        )
+        text = (resp.text or "").strip()
+        match = re.search(r"[0-3]", text)
+        if match is None:
+            return 0
+        return int(match.group(0))
+    except Exception:
+        return 0
+
+
+def _call_facilitator(
+    client: genai.Client,
+    topic: str,
+    transcript: list[str],
+    deviation_score: int = 0,
+) -> str:
+    """話題を振る/お題に戻す司会者。
+
+    deviation_score が DEVIATION_THRESHOLD 以上のときは
+    自然な口調で「お題に戻す」一言を返す。それ以下なら従来通り軽く話題を振る。
+    """
     history = "\n".join(transcript[-8:])
-    prompt = f"""あなたは2人の雑談を見守る空気役です。たまに軽く話題を振るだけ。
+    if deviation_score >= DEVIATION_THRESHOLD:
+        prompt = f"""あなたは2人の雑談を見守る空気役です。今、話が **お題から逸れています**。
+お題に自然に引き戻す一言を放ってください。
+
+【お題】
+{topic}
+
+【対話ログ】
+{history}
+
+【出力ルール】
+- 強引・進行役っぽい口調は禁止（「論点を整理すると」「本題に戻すと」は使わない）
+- 「ところでさ、〇〇の話だけど〜」「で、〇〇について実際どう？」のような雑談トーン
+- お題のキーワードを必ず1つ含める
+- 60字以内、1〜2文、標準語、整理・要約・まとめは絶対しない"""
+    else:
+        prompt = f"""あなたは2人の雑談を見守る空気役です。たまに軽く話題を振るだけ。
+
+【お題】
+{topic}
 
 【対話ログ】
 {history}
@@ -394,6 +482,7 @@ def _call_facilitator(client: genai.Client, transcript: list[str]) -> str:
 【出力ルール】
 - 「ここまでの論点を整理すると」みたいな進行役の口調は禁止
 - 「で、〜はどう？」「ちなみに〜って実際どう思う？」みたいな軽い投げ込みを1〜2文
+- お題から大きく外れない範囲で（お題に絡む別アングルを振るのは OK）
 - 60字以内、雑談トーン、整理・要約・まとめは絶対しない
 - 出力は標準語で。関西弁などの地方方言は使わない"""
     try:
@@ -624,7 +713,9 @@ def dialogue_events(
         transcript.append(f"{persona_b['name']}: {last_b}")
         time.sleep(delay_sec)
 
-        if round_num >= MIN_ROUNDS_BEFORE_JUDGE and _call_judge(client, last_a, last_b):
+        if round_num >= MIN_ROUNDS_BEFORE_JUDGE and _call_judge(
+            client, topic, last_a, last_b
+        ):
             yield {"type": "agreement", "round": round_num}
             yield {
                 "type": "thinking",
@@ -637,7 +728,24 @@ def dialogue_events(
             yield {"type": "summary", "text": summary, "topic": topic}
             return
 
-        if round_num % intervention_interval == 0 and round_num < max_rounds:
+        # 司会者介入: 定期スケジュール OR 逸脱スコア閾値超え
+        on_schedule = (
+            round_num % intervention_interval == 0 and round_num < max_rounds
+        )
+
+        # 逸脱検知は API コストがかかるので、必要なときだけ呼ぶ。
+        # 以下のケースではスキップ：
+        # - 最終ラウンド（直後に終了するため）
+        # - ラウンド1（お題提示直後で逸脱判定が無意味）
+        # - 定期スケジュール介入直前（どうせ介入するため）
+        deviation_score = 0
+        if round_num >= 2 and round_num < max_rounds and not on_schedule:
+            deviation_score = _call_deviation_judge(
+                client, topic, last_a, last_b
+            )
+
+        deviation_trigger = deviation_score >= DEVIATION_THRESHOLD
+        if on_schedule or deviation_trigger:
             yield {
                 "type": "thinking",
                 "role": "ちょい話題振り",
@@ -645,8 +753,13 @@ def dialogue_events(
                 "message": _pick_facilitator_thinking(),
                 "for_event": "facilitator",
             }
-            fac = _call_facilitator(client, transcript)
-            yield {"type": "facilitator", "round": round_num, "text": fac}
+            fac = _call_facilitator(client, topic, transcript, deviation_score)
+            yield {
+                "type": "facilitator",
+                "round": round_num,
+                "text": fac,
+                "deviation_score": deviation_score,
+            }
             next_input = f"{last_b}\n\n（横から一言: {fac}）"
         else:
             next_input = last_b
