@@ -718,29 +718,37 @@ _SIDEBAR_CSS = """
     }
 
     /* === 話者アバター：どでかく、ちょっと楽しく === */
-    /* 円形コンテナそのものを拡大 */
+    /* Streamlit 各バージョンで data-testid が変わる可能性があるため、
+       既知パターンと「stChatMessage の最初の子要素」の両方をターゲット */
+    [data-testid="stChatMessage"] > div:first-child,
+    [data-testid="stChatMessage"] > span:first-child,
     [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"],
-    [data-testid="stChatMessage"] > div:first-child:has(> span),
-    [data-testid="stChatMessage"] > img:first-child {
-        width: 3.4rem !important;
-        height: 3.4rem !important;
-        min-width: 3.4rem !important;
-        min-height: 3.4rem !important;
-        font-size: 2.1rem !important;
+    [data-testid="stChatMessage"] [data-testid^="stChatMessageAvatar"],
+    [data-testid="stChatMessage"] [class*="avatar"] {
+        width: 3.6rem !important;
+        height: 3.6rem !important;
+        min-width: 3.6rem !important;
+        min-height: 3.6rem !important;
+        font-size: 2.2rem !important;
         line-height: 1 !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        flex: 0 0 3.6rem !important;
         filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
         transition: transform 0.2s ease;
         animation: avatar-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    /* 内側の絵文字 span も同じく拡大（Streamlit 実装差吸収） */
-    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] span,
-    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] {
-        font-size: 2.1rem !important;
+    /* 内側の絵文字（span / img / svg）も拡大 */
+    [data-testid="stChatMessage"] > div:first-child > *,
+    [data-testid="stChatMessage"] > span:first-child > *,
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] > *,
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] span {
+        font-size: 2.2rem !important;
+        line-height: 1 !important;
+        width: auto !important;
+        height: auto !important;
     }
     /* ホバーで軽く跳ねる */
+    [data-testid="stChatMessage"] > div:first-child:hover,
+    [data-testid="stChatMessage"] > span:first-child:hover,
     [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"]:hover {
         transform: scale(1.12) rotate(-4deg);
     }
@@ -753,6 +761,7 @@ _SIDEBAR_CSS = """
     /* メッセージとアバターの間隔を少し広めに */
     [data-testid="stChatMessage"] {
         gap: 14px !important;
+        align-items: flex-start !important;
     }
 
     /* === 考え中インジケータ：3点が順番に波打つ（フリーズ防止） === */
