@@ -9,10 +9,49 @@ import html
 import os
 import random
 import re
+import time
 from pathlib import Path
 
 import streamlit as st
 import streamlit.components.v1 as components
+
+
+# === タイプライター表示の設定 ===
+# 1センテンスごとに少しずつ表示する（ゲームのメッセージウインドウ風）。
+# STREAMING_DELAY = 0 にすると無効化（全文一気表示）。
+STREAMING_DELAY = 0.25  # 文と文の間の待機時間（秒）
+
+# 日本語の文末記号
+_SENTENCE_DELIMS = {"。", "！", "？", "!", "?", "\n"}
+# 直後にくっつく閉じ記号（前文に含める）
+_CLOSING_CHARS = {"」", "』", "）", ")", "”", "’"}
+
+
+def _split_sentences(text: str) -> list[str]:
+    """日本語テキストを文単位（句読点を含めて）に分割する。
+
+    例: "うん。じゃあやろう！でも本当？" → ["うん。", "じゃあやろう！", "でも本当？"]
+    閉じカッコ等が文末記号の直後にあれば、前の文に吸収する。
+    """
+    sentences: list[str] = []
+    buf = ""
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        buf += ch
+        if ch in _SENTENCE_DELIMS:
+            # 直後の閉じ括弧を吸収
+            while i + 1 < n and text[i + 1] in _CLOSING_CHARS:
+                i += 1
+                buf += text[i]
+            if buf.strip():
+                sentences.append(buf)
+            buf = ""
+        i += 1
+    if buf.strip():
+        sentences.append(buf)
+    return sentences
 
 
 RANDOM_TOPICS = [
@@ -1522,6 +1561,30 @@ def _run_dialogue(cfg: dict) -> None:
         pending_placeholder = None
         return True
 
+    def _swap_streaming(render_fn_factory, full_text: str) -> bool:
+        """thinking placeholder の中身を、文単位の漸進表示で置き換える。
+
+        render_fn_factory(accumulated_text) は、その時点までの蓄積テキストを
+        受け取って描画する関数。文末ごとに placeholder を書き換える。
+        """
+        nonlocal pending_placeholder
+        if pending_placeholder is None:
+            return False
+        slot = pending_placeholder
+        pending_placeholder = None  # 先に占有を解除（多重操作防止）
+
+        sentences = _split_sentences(full_text) or [full_text]
+        accumulated = ""
+        total = len(sentences)
+        for idx, sentence in enumerate(sentences):
+            accumulated += sentence
+            with slot.container():
+                render_fn_factory(accumulated)
+            # 最後の文の後は待機しない（次の処理にすぐ進む）
+            if STREAMING_DELAY > 0 and idx < total - 1:
+                time.sleep(STREAMING_DELAY)
+        return True
+
     def _clear_placeholder():
         nonlocal pending_placeholder
         if pending_placeholder is not None:
@@ -1565,21 +1628,29 @@ def _run_dialogue(cfg: dict) -> None:
 
             elif t == "turn":
                 _clear_retry()
-                def _render_turn(_ev=ev):
-                    role = "user" if _ev["persona"] == "A" else "assistant"
-                    with st.chat_message(role, avatar=_ev["emoji"]):
+                role = "user" if ev["persona"] == "A" else "assistant"
+                _ev = ev
+
+                def _render_turn_partial(accumulated: str, _ev=_ev, _role=role):
+                    with st.chat_message(_role, avatar=_ev["emoji"]):
                         st.caption(f"ターン{_ev['round']} ・ {_ev['name']}")
-                        st.write(_ev["text"])
-                if not _swap_into_placeholder(_render_turn):
+                        st.write(accumulated)
+
+                if not _swap_streaming(_render_turn_partial, ev["text"]):
                     _render_event(ev, chat_container)
 
             elif t == "facilitator":
                 _clear_retry()
-                def _render_fac(_ev=ev):
+                _ev = ev
+
+                def _render_fac_partial(accumulated: str, _ev=_ev):
                     with st.chat_message("ai", avatar="🎤"):
-                        st.caption(f"ちょい話題振り（{_ev['round']}往復経過）")
-                        st.info(_ev["text"])
-                if not _swap_into_placeholder(_render_fac):
+                        st.caption(
+                            f"ちょい話題振り（{_ev['round']}往復経過）"
+                        )
+                        st.info(accumulated)
+
+                if not _swap_streaming(_render_fac_partial, ev["text"]):
                     _render_event(ev, chat_container)
 
             elif t == "summary":
