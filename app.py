@@ -717,6 +717,44 @@ _SIDEBAR_CSS = """
         color: #8a8f98 !important;
     }
 
+    /* === 話者アバター：どでかく、ちょっと楽しく === */
+    /* 円形コンテナそのものを拡大 */
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"],
+    [data-testid="stChatMessage"] > div:first-child:has(> span),
+    [data-testid="stChatMessage"] > img:first-child {
+        width: 3.4rem !important;
+        height: 3.4rem !important;
+        min-width: 3.4rem !important;
+        min-height: 3.4rem !important;
+        font-size: 2.1rem !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+        transition: transform 0.2s ease;
+        animation: avatar-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    /* 内側の絵文字 span も同じく拡大（Streamlit 実装差吸収） */
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] span,
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"] {
+        font-size: 2.1rem !important;
+    }
+    /* ホバーで軽く跳ねる */
+    [data-testid="stChatMessage"] [data-testid^="chatAvatarIcon"]:hover {
+        transform: scale(1.12) rotate(-4deg);
+    }
+    /* 登場時のポップアニメーション */
+    @keyframes avatar-pop {
+        0%   { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+        60%  { transform: scale(1.18) rotate(6deg);  opacity: 1; }
+        100% { transform: scale(1)    rotate(0deg);  opacity: 1; }
+    }
+    /* メッセージとアバターの間隔を少し広めに */
+    [data-testid="stChatMessage"] {
+        gap: 14px !important;
+    }
+
     /* === 考え中インジケータ：3点が順番に波打つ（フリーズ防止） === */
     .thinking-line {
         color: #c9cdd2 !important;
